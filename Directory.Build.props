@@ -43,7 +43,7 @@
     <PeachpieLibraryRegularExpressionsVersion>1.7.0</PeachpieLibraryRegularExpressionsVersion>
     <MySqlConnectorVersion>2.0.0</MySqlConnectorVersion>
     <ParserVersion>8.5.18350</ParserVersion>
-    <PeachpieMicrosoftCodeAnalysisVersion>3.7.4</PeachpieMicrosoftCodeAnalysisVersion>
+    <PeachpieMicrosoftCodeAnalysisVersion>5.8.0-dev</PeachpieMicrosoftCodeAnalysisVersion>
     
   </PropertyGroup>
 
