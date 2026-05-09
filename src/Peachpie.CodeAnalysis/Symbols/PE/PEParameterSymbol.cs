@@ -789,7 +789,7 @@ namespace Pchp.CodeAnalysis.Symbols
             {
                 IsParamsValues result = IsParamsValues.Initialized;
 
-                if (_moduleSymbol.Module.HasParamsAttribute(_handle)) // HasParamArrayAttribute
+                if (_moduleSymbol.Module.HasParamArrayAttribute(_handle))
                 {
                     result |= IsParamsValues.Array;
                 }

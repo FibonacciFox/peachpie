@@ -147,6 +147,12 @@ namespace Pchp.CodeAnalysis.Symbols
 
         NullableAnnotation ILocalSymbol.NullableAnnotation => NullableAnnotation.None;
 
+        ScopedKind ILocalSymbol.ScopedKind => ScopedKind.None;
+
+        bool ILocalSymbol.IsForEach => false;
+
+        bool ILocalSymbol.IsUsing => false;
+
         #endregion
     }
 

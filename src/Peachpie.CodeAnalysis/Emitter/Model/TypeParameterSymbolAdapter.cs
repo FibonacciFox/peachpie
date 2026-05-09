@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using Roslyn.Utilities;
@@ -54,6 +54,10 @@ namespace Pchp.CodeAnalysis.Symbols
                 return null;
             }
         }
+
+        bool Cci.IGenericParameter.AllowsRefLikeType => false;
+
+        bool Cci.IDefinition.IsEncDeleted => false;
 
         Cci.IGenericMethodParameterReference Cci.ITypeReference.AsGenericMethodParameterReference
         {
@@ -232,7 +236,7 @@ namespace Pchp.CodeAnalysis.Symbols
                         break;
                 }
                 var typeRef = moduleBeingBuilt.Translate(type,
-                                                         syntaxNodeOpt: context.SyntaxNodeOpt,
+                                                         SyntaxNode: context.SyntaxNode,
                                                          diagnostics: context.Diagnostics);
                 yield return new Cci.TypeReferenceWithAttributes(typeRef);
             }
@@ -240,7 +244,7 @@ namespace Pchp.CodeAnalysis.Symbols
             {
                 // Add System.ValueType constraint to comply with Dev11 output
                 var typeRef = moduleBeingBuilt.GetSpecialType(SpecialType.System_ValueType,
-                                                              syntaxNodeOpt: context.SyntaxNodeOpt,
+                                                              SyntaxNode: context.SyntaxNode,
                                                               diagnostics: context.Diagnostics);
                 yield return new Cci.TypeReferenceWithAttributes(typeRef);
             }

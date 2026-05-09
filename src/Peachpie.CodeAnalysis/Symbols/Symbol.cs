@@ -6,8 +6,10 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading;
+using System.Linq;
 using Microsoft.CodeAnalysis.Collections;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
@@ -46,6 +48,10 @@ namespace Pchp.CodeAnalysis
                 return this.Name;
             }
         }
+
+        public virtual int MetadataToken => 0;
+
+        internal virtual Microsoft.Cci.TypeMemberVisibility MetadataVisibility => default;
 
         /// <summary>
         /// Gets the kind of this symbol.
@@ -569,7 +575,7 @@ namespace Pchp.CodeAnalysis
             get { return this.DeclaringCompilation != null; }
         }
 
-        internal virtual bool IsDefinedInSourceTree(SyntaxTree tree, TextSpan? definedWithinSpan, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual bool IsDefinedInSourceTree(SyntaxTree tree, TextSpan? definedWithinSpan, CancellationToken cancellationToken = default(CancellationToken))
         {
             var declaringReferences = this.DeclaringSyntaxReferences;
             if (this.IsImplicitlyDeclared && declaringReferences.Length == 0)
@@ -1174,6 +1180,11 @@ namespace Pchp.CodeAnalysis
             throw new NotImplementedException();
         }
 
+        public virtual TResult Accept<TArgument, TResult>(SymbolVisitor<TArgument, TResult> visitor, TArgument argument)
+        {
+            return visitor.DefaultVisit(this, argument);
+        }
+
         Accessibility ISymbol.DeclaredAccessibility
         {
             get
@@ -1189,6 +1200,8 @@ namespace Pchp.CodeAnalysis
                 return this.OriginalDefinition;
             }
         }
+
+        int ISymbol.MetadataToken => this.MetadataToken;
 
         #endregion
 
@@ -1209,6 +1222,16 @@ namespace Pchp.CodeAnalysis
         INamedTypeSymbolInternal ISymbolInternal.ContainingType => this.ContainingType;
 
         INamespaceSymbolInternal ISymbolInternal.ContainingNamespace => this.ContainingNamespace;
+
+        int ISymbolInternal.MetadataToken => this.MetadataToken;
+
+        Microsoft.Cci.TypeMemberVisibility ISymbolInternal.MetadataVisibility => this.MetadataVisibility;
+
+        Location ISymbolInternal.GetFirstLocation() => this.Locations.First();
+
+        Location ISymbolInternal.GetFirstLocationOrNone() => this.Locations.IsDefaultOrEmpty ? Location.None : this.Locations[0];
+
+        Microsoft.Cci.IReference ISymbolInternal.GetCciAdapter() => this as Microsoft.Cci.IReference;
 
         #endregion
     }

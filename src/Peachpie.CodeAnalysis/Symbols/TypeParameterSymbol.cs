@@ -473,6 +473,8 @@ namespace Pchp.CodeAnalysis.Symbols
 
         bool ITypeParameterSymbol.HasNotNullConstraint => false;
 
+        bool ITypeParameterSymbol.AllowsRefLikeType => false;
+
         ImmutableArray<NullableAnnotation> ITypeParameterSymbol.ConstraintNullableAnnotations => ConstraintTypes.SelectAsArray(c => ((ITypeSymbol)c).NullableAnnotation);
 
         #endregion

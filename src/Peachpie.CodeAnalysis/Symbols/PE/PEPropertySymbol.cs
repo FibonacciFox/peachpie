@@ -568,8 +568,8 @@ namespace Pchp.CodeAnalysis.Symbols
                 var lastPropertyParamIndex = propertyParams.Length - 1;
                 var getHandle = getMethodParams[lastPropertyParamIndex].Handle;
                 var setHandle = setMethodParams[lastPropertyParamIndex].Handle;
-                var getterHasParamArray = !getHandle.IsNil && module.HasParamsAttribute(getHandle);
-                var setterHasParamArray = !setHandle.IsNil && module.HasParamsAttribute(setHandle);
+                var getterHasParamArray = !getHandle.IsNil && module.HasParamArrayAttribute(getHandle);
+                var setterHasParamArray = !setHandle.IsNil && module.HasParamArrayAttribute(setHandle);
                 if (getterHasParamArray != setterHasParamArray)
                 {
                     return false;

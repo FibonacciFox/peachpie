@@ -25,22 +25,22 @@ namespace Peachpie.CodeAnalysis.Symbols
 
         public static bool HasPhpTraitAttribute(EntityHandle token, PEModuleSymbol containingModule)
         {
-            return PEModule.FindTargetAttribute(containingModule.Module.MetadataReader, token, PhpTraitAttribute).HasValue;
+            return PEModule.FindTargetAttribute(containingModule.Module.MetadataReader, token, PhpTraitAttribute, out _).HasValue;
         }
 
         public static bool HasCastToFalse(EntityHandle token, PEModuleSymbol containingModule)
         {
-            return containingModule != null && PEModule.FindTargetAttribute(containingModule.Module.MetadataReader, token, CastToFalse).HasValue;
+            return containingModule != null && PEModule.FindTargetAttribute(containingModule.Module.MetadataReader, token, CastToFalse, out _).HasValue;
         }
 
         public static bool HasPhpHiddenAttribute(EntityHandle token, PEModuleSymbol containingModule)
         {
-            return containingModule != null && PEModule.FindTargetAttribute(containingModule.Module.MetadataReader, token, PhpHiddenAttribute).HasValue;
+            return containingModule != null && PEModule.FindTargetAttribute(containingModule.Module.MetadataReader, token, PhpHiddenAttribute, out _).HasValue;
         }
 
         public static bool HasPhpFieldsOnlyCtorAttribute(EntityHandle token, PEModuleSymbol containingModule)
         {
-            return containingModule != null && PEModule.FindTargetAttribute(containingModule.Module.MetadataReader, token, PhpFieldsOnlyCtorAttribute).HasValue;
+            return containingModule != null && PEModule.FindTargetAttribute(containingModule.Module.MetadataReader, token, PhpFieldsOnlyCtorAttribute, out _).HasValue;
         }
 
         static bool ReadCustomAttributeValue(CustomAttributeHandle handle, PEModule module, out int value)
@@ -192,7 +192,7 @@ namespace Peachpie.CodeAnalysis.Symbols
 
         public static bool HasPhpRwAttribute(EntityHandle token, PEModuleSymbol containingModule)
         {
-            return containingModule != null && PEModule.FindTargetAttribute(containingModule.Module.MetadataReader, token, PhpRwAttribute).HasValue;
+            return containingModule != null && PEModule.FindTargetAttribute(containingModule.Module.MetadataReader, token, PhpRwAttribute, out _).HasValue;
         }
     }
 

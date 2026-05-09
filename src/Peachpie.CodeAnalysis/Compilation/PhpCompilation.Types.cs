@@ -440,9 +440,9 @@ namespace Pchp.CodeAnalysis
                 }
 
                 MemberDescriptor descriptor = WellKnownMembers.GetDescriptor(member);
-                NamedTypeSymbol type = descriptor.DeclaringTypeId <= (int)SpecialType.Count
-                                            ? this.GetSpecialType((SpecialType)descriptor.DeclaringTypeId)
-                                            : this.GetWellKnownType((WellKnownType)descriptor.DeclaringTypeId);
+                NamedTypeSymbol type = descriptor.IsSpecialTypeMember
+                                            ? this.GetSpecialType((SpecialType)descriptor.DeclaringSpecialType)
+                                            : this.GetWellKnownType(descriptor.DeclaringWellKnownType);
                 Symbol result = null;
 
                 if (!type.IsErrorType())

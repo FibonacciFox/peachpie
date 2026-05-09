@@ -329,7 +329,7 @@ namespace Pchp.CodeAnalysis.CodeGen
 
         public static CommonConversion WithIsNullable(this CommonConversion conv, bool isNullable)
         {
-            return new CommonConversion(conv.Exists, conv.IsIdentity, conv.IsNumeric, conv.IsReference, conv.IsImplicit, isNullable, conv.MethodSymbol);
+            return new CommonConversion(conv.Exists, conv.IsIdentity, conv.IsNumeric, conv.IsReference, conv.IsImplicit, isNullable, conv.MethodSymbol, null);
         }
     }
 }

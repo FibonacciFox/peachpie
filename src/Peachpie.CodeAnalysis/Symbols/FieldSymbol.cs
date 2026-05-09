@@ -188,6 +188,18 @@ namespace Pchp.CodeAnalysis.Symbols
         /// </summary>
         public virtual IFieldSymbol CorrespondingTupleField => null;
 
+        bool IFieldSymbol.IsRequired => false;
+
+        RefKind IFieldSymbol.RefKind => RefKind.None;
+
+        ImmutableArray<CustomModifier> IFieldSymbol.RefCustomModifiers => ImmutableArray<CustomModifier>.Empty;
+
+        bool IFieldSymbol.IsExplicitlyNamedTupleElement => false;
+
+        ISymbolInternal IFieldSymbolInternal.AssociatedSymbol => (ISymbolInternal)AssociatedSymbol;
+
+        ITypeSymbolInternal IFieldSymbolInternal.Type => Type;
+
         /// <summary>
         /// Returns false because field can't be abstract.
         /// </summary>

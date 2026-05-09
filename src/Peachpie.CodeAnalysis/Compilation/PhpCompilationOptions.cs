@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Immutable;
+using System.Threading;
 using Roslyn.Utilities;
 using AST = Devsense.PHP.Syntax.Ast;
 
@@ -167,6 +168,7 @@ namespace Pchp.CodeAnalysis
                    currentLocalTime: currentLocalTime,
                    xmlReferenceResolver: xmlReferenceResolver,
                    sourceReferenceResolver: sourceReferenceResolver,
+                   syntaxTreeOptionsProvider: null,
                    metadataReferenceResolver: metadataReferenceResolver,
                    assemblyIdentityComparer: assemblyIdentityComparer,
                    strongNameProvider: strongNameProvider,
@@ -209,6 +211,7 @@ namespace Pchp.CodeAnalysis
             bool debugPlusMode,
             XmlReferenceResolver xmlReferenceResolver,
             SourceReferenceResolver sourceReferenceResolver,
+            SyntaxTreeOptionsProvider syntaxTreeOptionsProvider,
             MetadataReferenceResolver metadataReferenceResolver,
             AssemblyIdentityComparer assemblyIdentityComparer,
             StrongNameProvider strongNameProvider,
@@ -224,7 +227,7 @@ namespace Pchp.CodeAnalysis
                    cryptoKeyContainer, cryptoKeyFile, cryptoPublicKey, delaySign, publicSign, optimizationLevel.AsOptimizationLevel(), checkOverflow,
                    platform, generalDiagnosticOption, warningLevel, specificDiagnosticOptions.ToImmutableDictionaryOrEmpty(),
                    concurrentBuild, deterministic, currentLocalTime, debugPlusMode, xmlReferenceResolver,
-                   sourceReferenceResolver, metadataReferenceResolver, assemblyIdentityComparer,
+                   sourceReferenceResolver, syntaxTreeOptionsProvider, metadataReferenceResolver, assemblyIdentityComparer,
                    strongNameProvider, metadataImportOptions, referencesSupersedeLowerVersions)
         {
             this.BaseDirectory = baseDirectory;
@@ -266,6 +269,7 @@ namespace Pchp.CodeAnalysis
             debugPlusMode: other.DebugPlusMode,
             xmlReferenceResolver: other.XmlReferenceResolver,
             sourceReferenceResolver: other.SourceReferenceResolver,
+            syntaxTreeOptionsProvider: other.SyntaxTreeOptionsProvider,
             metadataReferenceResolver: other.MetadataReferenceResolver,
             assemblyIdentityComparer: other.AssemblyIdentityComparer,
             strongNameProvider: other.StrongNameProvider,
@@ -511,7 +515,7 @@ namespace Pchp.CodeAnalysis
                 return this;
             }
 
-            return new PhpCompilationOptions(this) { DebugPlusMode_internal_protected_set = debugPlusMode };
+            return new PhpCompilationOptions(this) { DebugPlusMode = debugPlusMode };
         }
 
         public PhpCompilationOptions WithDefines(ImmutableDictionary<string, string> defines)
@@ -564,6 +568,16 @@ namespace Pchp.CodeAnalysis
             return new PhpCompilationOptions(this) { MetadataReferenceResolver = resolver };
         }
 
+        public new PhpCompilationOptions WithSyntaxTreeOptionsProvider(SyntaxTreeOptionsProvider provider)
+        {
+            if (ReferenceEquals(provider, this.SyntaxTreeOptionsProvider))
+            {
+                return this;
+            }
+
+            return new PhpCompilationOptions(this) { SyntaxTreeOptionsProvider = provider };
+        }
+
         public new PhpCompilationOptions WithAssemblyIdentityComparer(AssemblyIdentityComparer comparer)
         {
             comparer = comparer ?? AssemblyIdentityComparer.Default;
@@ -604,6 +618,9 @@ namespace Pchp.CodeAnalysis
 
         protected override CompilationOptions CommonWithSourceReferenceResolver(SourceReferenceResolver resolver) =>
             WithSourceReferenceResolver(resolver);
+
+        protected override CompilationOptions CommonWithSyntaxTreeOptionsProvider(SyntaxTreeOptionsProvider provider) =>
+            WithSyntaxTreeOptionsProvider(provider);
 
         protected override CompilationOptions CommonWithMetadataReferenceResolver(MetadataReferenceResolver resolver) =>
             WithMetadataReferenceResolver(resolver);
@@ -646,6 +663,8 @@ namespace Pchp.CodeAnalysis
         {
             throw new NotImplementedException();
         }
+
+        internal override DeterministicKeyBuilder CreateDeterministicKeyBuilder() => PhpDeterministicKeyBuilder.Instance;
 
         internal override void ValidateOptions(ArrayBuilder<Diagnostic> builder)
         {
@@ -750,12 +769,12 @@ namespace Pchp.CodeAnalysis
             return this.Equals(obj as PhpCompilationOptions);
         }
 
-        public override int GetHashCode()
+        protected override int ComputeHashCode()
         {
             return base.GetHashCodeHelper();
         }
 
-        internal override Diagnostic FilterDiagnostic(Diagnostic diagnostic)
+        internal override Diagnostic FilterDiagnostic(Diagnostic diagnostic, CancellationToken cancellationToken)
         {
             // return PhpDiagnosticFilter.Filter(diagnostic, WarningLevel, GeneralDiagnosticOption, SpecificDiagnosticOptions);
 

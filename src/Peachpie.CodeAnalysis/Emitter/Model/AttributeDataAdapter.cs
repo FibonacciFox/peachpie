@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.CodeGen;
 using Microsoft.CodeAnalysis.Emit;
@@ -31,7 +31,7 @@ namespace Pchp.CodeAnalysis.Symbols
         Cci.IMethodReference Cci.ICustomAttribute.Constructor(EmitContext context, bool reportDiagnostics)
         {
             PEModuleBuilder moduleBeingBuilt = (PEModuleBuilder)context.Module;
-            return (Cci.IMethodReference)moduleBeingBuilt.Translate(this.AttributeConstructor, /*context.SyntaxNodeOpt, */context.Diagnostics, false);
+            return (Cci.IMethodReference)moduleBeingBuilt.Translate(this.AttributeConstructor, /*context.SyntaxNode, */context.Diagnostics, false);
         }
 
         ImmutableArray<Cci.IMetadataNamedArgument> Cci.ICustomAttribute.GetNamedArguments(EmitContext context)
@@ -69,7 +69,7 @@ namespace Pchp.CodeAnalysis.Symbols
         Cci.ITypeReference Cci.ICustomAttribute.GetType(EmitContext context)
         {
             PEModuleBuilder moduleBeingBuilt = (PEModuleBuilder)context.Module;
-            return moduleBeingBuilt.Translate(this.AttributeClass, syntaxNodeOpt: context.SyntaxNodeOpt, diagnostics: context.Diagnostics);
+            return moduleBeingBuilt.Translate(this.AttributeClass, SyntaxNode: context.SyntaxNode, diagnostics: context.Diagnostics);
         }
 
         bool Cci.ICustomAttribute.AllowMultiple
@@ -125,16 +125,16 @@ namespace Pchp.CodeAnalysis.Symbols
         {
             Debug.Assert(argument.Value != null);
             var moduleBeingBuilt = (PEModuleBuilder)context.Module;
-            var syntaxNodeOpt = (SyntaxNode)context.SyntaxNodeOpt;
+            var SyntaxNode = (SyntaxNode)context.SyntaxNode;
             var diagnostics = context.Diagnostics;
-            return new MetadataTypeOf(moduleBeingBuilt.Translate((TypeSymbol)argument.Value, syntaxNodeOpt, diagnostics),
-                                      moduleBeingBuilt.Translate((TypeSymbol)argument.Type, syntaxNodeOpt, diagnostics));
+            return new MetadataTypeOf(moduleBeingBuilt.Translate((TypeSymbol)argument.Value, SyntaxNode, diagnostics),
+                                      moduleBeingBuilt.Translate((TypeSymbol)argument.Type, SyntaxNode, diagnostics));
         }
 
         private static MetadataConstant CreateMetadataConstant(ITypeSymbol type, object value, EmitContext context)
         {
             PEModuleBuilder moduleBeingBuilt = (PEModuleBuilder)context.Module;
-            return moduleBeingBuilt.CreateConstant((TypeSymbol)type, value, syntaxNodeOpt: context.SyntaxNodeOpt, diagnostics: context.Diagnostics);
+            return moduleBeingBuilt.CreateConstant((TypeSymbol)type, value, SyntaxNode: context.SyntaxNode, diagnostics: context.Diagnostics);
         }
 
         private Cci.IMetadataNamedArgument CreateMetadataNamedArgument(string name, TypedConstant argument, EmitContext context)
@@ -153,7 +153,7 @@ namespace Pchp.CodeAnalysis.Symbols
             }
 
             PEModuleBuilder moduleBeingBuilt = (PEModuleBuilder)context.Module;
-            return new MetadataNamedArgument(symbol, moduleBeingBuilt.Translate(type, syntaxNodeOpt: context.SyntaxNodeOpt, diagnostics: context.Diagnostics), value);
+            return new MetadataNamedArgument(symbol, moduleBeingBuilt.Translate(type, SyntaxNode: context.SyntaxNode, diagnostics: context.Diagnostics), value);
         }
 
         private Symbol LookupName(string name)

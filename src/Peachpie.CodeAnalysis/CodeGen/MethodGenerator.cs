@@ -120,7 +120,7 @@ namespace Pchp.CodeAnalysis.CodeGen
             // TODO: Check whether in some cases we cannot skip it
             bool areLocalsZeroed = true;
 
-            ILBuilder il = new ILBuilder(moduleBuilder, localSlotManager, optimizations.AsOptimizationLevel(), areLocalsZeroed);
+            ILBuilder il = new ILBuilder(moduleBuilder, localSlotManager, diagnostics, optimizations.AsOptimizationLevel(), areLocalsZeroed);
             try
             {
                 StateMachineMoveNextBodyDebugInfo stateMachineMoveNextDebugInfo = null;
@@ -180,14 +180,17 @@ namespace Pchp.CodeAnalysis.CodeGen
                     il.GetAllScopes(),
                     il.HasDynamicLocal,
                     null, // importScopeOpt,
-                    ImmutableArray<LambdaDebugInfo>.Empty, // lambdaDebugInfo,
-                    ImmutableArray<ClosureDebugInfo>.Empty, // closureDebugInfo,
+                    ImmutableArray<EncLambdaInfo>.Empty,
+                    ImmutableArray<LambdaRuntimeRudeEditInfo>.Empty,
+                    ImmutableArray<EncClosureInfo>.Empty,
                     null, //stateMachineTypeOpt?.Name,
                     stateMachineHoistedLocalScopes,
                     stateMachineHoistedLocalSlots,
                     stateMachineAwaiterSlots,
+                    default(StateMachineStatesDebugInfo),
                     stateMachineMoveNextDebugInfo,
-                    null);  // dynamicAnalysisDataOpt
+                    ImmutableArray<SourceSpan>.Empty,
+                    false);
             }
             finally
             {
@@ -261,14 +264,17 @@ namespace Pchp.CodeAnalysis.CodeGen
                     il.GetAllScopes(),
                     il.HasDynamicLocal,
                     null, // importScopeOpt,
-                    ImmutableArray<LambdaDebugInfo>.Empty, // lambdaDebugInfo,
-                    ImmutableArray<ClosureDebugInfo>.Empty, // closureDebugInfo,
+                    ImmutableArray<EncLambdaInfo>.Empty,
+                    ImmutableArray<LambdaRuntimeRudeEditInfo>.Empty,
+                    ImmutableArray<EncClosureInfo>.Empty,
                     null, //stateMachineTypeOpt?.Name,
                     stateMachineHoistedLocalScopes,
                     stateMachineHoistedLocalSlots,
                     stateMachineAwaiterSlots,
+                    default(StateMachineStatesDebugInfo),
                     null,   // stateMachineMoveNextDebugInfoOpt
-                    null);  // dynamicAnalysisDataOpt
+                    ImmutableArray<SourceSpan>.Empty,
+                    false);
             }
             finally
             {

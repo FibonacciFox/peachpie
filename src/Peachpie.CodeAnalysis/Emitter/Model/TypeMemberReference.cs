@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Emit;
 using Roslyn.Utilities;
 using Cci = Microsoft.Cci;
@@ -12,7 +12,7 @@ namespace Pchp.CodeAnalysis.Emit
         public virtual Cci.ITypeReference GetContainingType(EmitContext context)
         {
             PEModuleBuilder moduleBeingBuilt = (PEModuleBuilder)context.Module;
-            return moduleBeingBuilt.Translate(UnderlyingSymbol.ContainingType, context.SyntaxNodeOpt, context.Diagnostics);
+            return moduleBeingBuilt.Translate(UnderlyingSymbol.ContainingType, context.SyntaxNode, context.Diagnostics);
         }
 
         string Cci.INamedEntity.Name
@@ -42,5 +42,7 @@ namespace Pchp.CodeAnalysis.Emit
         {
             return null;
         }
+
+        Microsoft.CodeAnalysis.Symbols.ISymbolInternal Cci.IReference.GetInternalSymbol() => UnderlyingSymbol;
     }
 }

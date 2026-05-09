@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.Emit;
 using Pchp.CodeAnalysis.Symbols;
@@ -29,7 +29,7 @@ namespace Pchp.CodeAnalysis.Emit
 
             foreach (var arg in UnderlyingMethod.TypeArguments)
             {
-                yield return moduleBeingBuilt.Translate(arg, syntaxNodeOpt: context.SyntaxNodeOpt, diagnostics: context.Diagnostics);
+                yield return moduleBeingBuilt.Translate(arg, SyntaxNode: context.SyntaxNode, diagnostics: context.Diagnostics);
             }
         }
 

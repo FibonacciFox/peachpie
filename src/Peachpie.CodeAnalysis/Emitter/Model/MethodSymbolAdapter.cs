@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -71,7 +71,7 @@ namespace Pchp.CodeAnalysis.Symbols
             {
                 PEModuleBuilder moduleBeingBuilt = (PEModuleBuilder)context.Module;
                 return moduleBeingBuilt.Translate(this.ContainingType,
-                                                  syntaxNodeOpt: context.SyntaxNodeOpt,
+                                                  SyntaxNode: context.SyntaxNode,
                                                   diagnostics: context.Diagnostics);
             }
 
@@ -131,14 +131,6 @@ namespace Pchp.CodeAnalysis.Symbols
             }
         }
 
-        bool Cci.IMethodReference.IsGeneric
-        {
-            get
-            {
-                return this.IsGenericMethod;
-            }
-        }
-
         ushort Cci.ISignature.ParameterCount
         {
             get
@@ -174,6 +166,10 @@ namespace Pchp.CodeAnalysis.Symbols
                 return ImmutableArray<Cci.IParameterTypeInformation>.Empty;
             }
         }
+
+        bool Cci.IMethodDefinition.HasBody => Cci.DefaultImplementations.HasBody(this);
+
+        bool Cci.IDefinition.IsEncDeleted => false;
 
         public virtual Cci.CallingConvention CallingConvention
         {
@@ -238,7 +234,7 @@ namespace Pchp.CodeAnalysis.Symbols
             //ByRefReturnErrorTypeSymbol byRefType = this.ReturnType as ByRefReturnErrorTypeSymbol;
             return ((PEModuleBuilder)context.Module).Translate(
                 this.ReturnType, // (object)byRefType == null ? this.ReturnType : byRefType.ReferencedType,
-                syntaxNodeOpt: context.SyntaxNodeOpt,
+                SyntaxNode: context.SyntaxNode,
                 diagnostics: context.Diagnostics);
         }
 
@@ -251,7 +247,7 @@ namespace Pchp.CodeAnalysis.Symbols
             foreach (var arg in this.TypeArguments)
             {
                 yield return moduleBeingBuilt.Translate(arg,
-                                                        syntaxNodeOpt: context.SyntaxNodeOpt,
+                                                        SyntaxNode: context.SyntaxNode,
                                                         diagnostics: context.Diagnostics);
             }
 

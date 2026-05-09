@@ -4,6 +4,7 @@ using System;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Threading;
+using System.Linq;
 using Roslyn.Utilities;
 using Microsoft.CodeAnalysis;
 

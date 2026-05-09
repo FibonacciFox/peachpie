@@ -46,7 +46,7 @@ namespace Pchp.CodeAnalysis.Symbols
             return new PointerTypeSymbol(type, CSharpCustomModifier.Convert(customModifiers));
         }
 
-        internal override TypeSymbol MakeFunctionPointerTypeSymbol(CallingConvention callingConvention, ImmutableArray<ParamInfo<TypeSymbol>> returnAndParamTypes)
+        internal override TypeSymbol MakeFunctionPointerTypeSymbol(PEModuleSymbol moduleSymbol, CallingConvention callingConvention, ImmutableArray<ParamInfo<TypeSymbol>> returnAndParamTypes)
         {
             throw new NotImplementedException();
         }

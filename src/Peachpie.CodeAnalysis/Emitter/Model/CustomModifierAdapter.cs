@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis.Emit;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Symbols;
 using Pchp.CodeAnalysis.Emit;
 using System;
@@ -19,7 +19,7 @@ namespace Pchp.CodeAnalysis.Symbols
 
         Cci.ITypeReference Cci.ICustomModifier.GetModifier(EmitContext context)
         {
-            return ((PEModuleBuilder)context.Module).Translate((ITypeSymbolInternal)this.Modifier, context.SyntaxNodeOpt, context.Diagnostics);
+            return ((PEModuleBuilder)context.Module).Translate((ITypeSymbolInternal)this.Modifier, context.SyntaxNode, context.Diagnostics);
         }
     }
 }

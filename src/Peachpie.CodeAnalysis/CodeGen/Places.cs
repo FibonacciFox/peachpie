@@ -224,7 +224,7 @@ namespace Pchp.CodeAnalysis.CodeGen
         void EmitOpCode(ILBuilder il, ILOpCode code)
         {
             il.EmitOpCode(code);
-            il.EmitToken(_fieldref, null, DiagnosticBag.GetInstance());    // .{field}
+            il.EmitToken(_fieldref, null);    // .{field}
         }
 
         public TypeSymbol Type => _field.Type;
@@ -334,7 +334,7 @@ namespace Pchp.CodeAnalysis.CodeGen
                 ? _module.Translate(getter, DiagnosticBag.GetInstance(), false)
                 : getter;
 
-            il.EmitToken(getterref, null, DiagnosticBag.GetInstance());    // TODO: Translate
+            il.EmitToken(getterref, null);    // TODO: Translate
 
             //
             return getter.ReturnType;
@@ -370,7 +370,7 @@ namespace Pchp.CodeAnalysis.CodeGen
                 ? _module.Translate(setter, DiagnosticBag.GetInstance(), false)
                 : setter;
 
-            il.EmitToken(setterref, null, DiagnosticBag.GetInstance());    // TODO: Translate
+            il.EmitToken(setterref, null);    // TODO: Translate
 
             //
             Debug.Assert(setter.ReturnType.SpecialType == SpecialType.System_Void);
@@ -401,7 +401,7 @@ namespace Pchp.CodeAnalysis.CodeGen
             _operand.EmitLoad(il);
 
             il.EmitOpCode(ILOpCode.Call, _operator.GetCallStackBehavior());
-            il.EmitToken(_operator, null, DiagnosticBag.GetInstance());
+            il.EmitToken(_operator, null);
 
             return Type;
         }

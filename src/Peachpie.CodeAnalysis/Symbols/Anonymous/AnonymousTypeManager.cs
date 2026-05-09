@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Collections;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.Symbols;
 using Roslyn.Utilities;
@@ -17,6 +18,8 @@ namespace Pchp.CodeAnalysis.Symbols
 {
     internal sealed class AnonymousTypeManager : CommonAnonymousTypeManager
     {
+        internal override SynthesizedTypeMaps GetSynthesizedTypeMaps() => throw new NotImplementedException();
+
         internal AnonymousTypeManager(PhpCompilation compilation)
         {
             Debug.Assert(compilation != null);
@@ -316,7 +319,7 @@ namespace Pchp.CodeAnalysis.Symbols
 
         public MethodSymbol System_String__Format_IFormatProvider
         {
-            get { return this.Compilation.GetWellKnownTypeMember(WellKnownMember.System_String__Format_IFormatProvider) as MethodSymbol; }
+            get { return this.Compilation.GetSpecialTypeMember(SpecialMember.System_String__Format_IFormatProvider) as MethodSymbol; }
         }
 
         #endregion

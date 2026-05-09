@@ -18,6 +18,8 @@ namespace Pchp.CodeAnalysis.Semantics
 
         IEnumerable<IOperation> IOperation.Children => Array.Empty<IOperation>();
 
+        IOperation.OperationList IOperation.ChildOperations => default;
+
         SemanticModel IOperation.SemanticModel => null;
 
         #endregion
@@ -33,9 +35,9 @@ namespace Pchp.CodeAnalysis.Semantics
         /// <summary>
         /// Resolved value of the expression.
         /// </summary>
-        Optional<object> IOperation.ConstantValue => ConstantValueHlp;
+        Optional<object?> IOperation.ConstantValue => ConstantValueHlp;
 
-        protected virtual Optional<object> ConstantValueHlp => default(Optional<object>);
+        protected virtual Optional<object?> ConstantValueHlp => default(Optional<object?>);
 
         public abstract void Accept(OperationVisitor visitor);
 

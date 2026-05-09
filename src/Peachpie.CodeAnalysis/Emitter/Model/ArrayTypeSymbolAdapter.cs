@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis.Emit;
+using Microsoft.CodeAnalysis.Emit;
 using Pchp.CodeAnalysis.Emit;
 using Roslyn.Utilities;
 using System;
@@ -19,7 +19,7 @@ namespace Pchp.CodeAnalysis.Symbols
         {
             PEModuleBuilder moduleBeingBuilt = (PEModuleBuilder)context.Module;
 
-            var type = moduleBeingBuilt.Translate(this.ElementType, syntaxNodeOpt: context.SyntaxNodeOpt, diagnostics: context.Diagnostics);
+            var type = moduleBeingBuilt.Translate(this.ElementType, SyntaxNode: context.SyntaxNode, diagnostics: context.Diagnostics);
 
             if (this.CustomModifiers.Length == 0)
             {

@@ -49,6 +49,8 @@ namespace Pchp.CodeAnalysis
             throw new NotSupportedException();
         }
 
+        Microsoft.CodeAnalysis.Symbols.ISymbolInternal Cci.IReference.GetInternalSymbol() => this;
+
         internal virtual IEnumerable<AttributeData> GetCustomAttributesToEmit(CommonModuleCompilationState compilationState)
         {
             return this.GetAttributes();

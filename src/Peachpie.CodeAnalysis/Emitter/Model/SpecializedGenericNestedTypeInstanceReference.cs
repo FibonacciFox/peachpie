@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.PooledObjects;
 using System.Diagnostics;
@@ -35,7 +35,7 @@ namespace Pchp.CodeAnalysis.Emit
             var builder = ArrayBuilder<Cci.ITypeReference>.GetInstance();
             foreach (TypeSymbol type in UnderlyingNamedType.TypeArguments)//TypeArgumentsNoUseSiteDiagnostics)
             {
-                builder.Add(moduleBeingBuilt.Translate(type, syntaxNodeOpt: context.SyntaxNodeOpt, diagnostics: context.Diagnostics));
+                builder.Add(moduleBeingBuilt.Translate(type, SyntaxNode: context.SyntaxNode, diagnostics: context.Diagnostics));
             }
 
             return builder.ToImmutableAndFree();

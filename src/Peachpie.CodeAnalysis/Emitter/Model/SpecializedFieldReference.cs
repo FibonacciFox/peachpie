@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
 using Pchp.CodeAnalysis.Symbols;
@@ -56,7 +57,7 @@ namespace Pchp.CodeAnalysis.Emit
         Cci.ITypeReference Cci.IFieldReference.GetType(EmitContext context)
         {
             var customModifiers = _underlyingField.CustomModifiers;
-            var type = ((PEModuleBuilder)context.Module).Translate(_underlyingField.Type, syntaxNodeOpt: /*(CSharpSyntaxNode)context.SyntaxNodeOpt*/null, diagnostics: context.Diagnostics);
+            var type = ((PEModuleBuilder)context.Module).Translate(_underlyingField.Type, SyntaxNode: /*(CSharpSyntaxNode)context.SyntaxNode*/null, diagnostics: context.Diagnostics);
 
             if (customModifiers.Length == 0)
             {
@@ -77,6 +78,10 @@ namespace Pchp.CodeAnalysis.Emit
         {
             return null;
         }
+
+        ImmutableArray<Cci.ICustomModifier> Cci.IFieldReference.RefCustomModifiers => ImmutableArray<Cci.ICustomModifier>.Empty;
+
+        bool Cci.IFieldReference.IsByReference => false;
 
         bool Cci.IFieldReference.IsContextualNamedEntity
         {

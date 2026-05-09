@@ -66,6 +66,8 @@ namespace Pchp.CodeAnalysis.Emitter
             return null;
         }
 
+        Microsoft.CodeAnalysis.Symbols.ISymbolInternal Cci.IReference.GetInternalSymbol() => _targetAssembly;
+
         #endregion
     }
 }

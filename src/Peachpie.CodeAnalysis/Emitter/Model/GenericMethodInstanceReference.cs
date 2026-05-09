@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Emit;
 using Cci = Microsoft.Cci;
 using Pchp.CodeAnalysis.Symbols;
@@ -27,7 +27,7 @@ namespace Pchp.CodeAnalysis.Emit
 
             foreach (var arg in UnderlyingMethod.TypeArguments)
             {
-                yield return moduleBeingBuilt.Translate(arg, syntaxNodeOpt: context.SyntaxNodeOpt, diagnostics: context.Diagnostics);
+                yield return moduleBeingBuilt.Translate(arg, SyntaxNode: context.SyntaxNode, diagnostics: context.Diagnostics);
             }
         }
 
@@ -36,7 +36,7 @@ namespace Pchp.CodeAnalysis.Emit
             // NoPia method might come through here.
             return ((PEModuleBuilder)context.Module).Translate(
                 UnderlyingMethod.OriginalDefinition,
-                syntaxNodeOpt: context.SyntaxNodeOpt,
+                SyntaxNode: context.SyntaxNode,
                 diagnostics: context.Diagnostics,
                 needDeclaration: true);
         }

@@ -133,7 +133,7 @@ namespace Pchp.CodeAnalysis.Symbols
                 AssemblySymbol assembly = (AssemblySymbol)moduleSymbol.ReferencedAssemblySymbols[referencedAssemblyIndex];
                 return assembly.LookupTopLevelMetadataType(ref emittedName, digThroughForwardedTypes: true);
             }
-            catch (Exception e) when (FatalError.Report(e)) // Trying to get more useful Watson dumps.
+            catch (Exception e) when (Microsoft.CodeAnalysis.ErrorReporting.FatalError.ReportAndPropagate(e)) // Trying to get more useful Watson dumps.
             {
                 throw ExceptionUtilities.Unreachable;
             }

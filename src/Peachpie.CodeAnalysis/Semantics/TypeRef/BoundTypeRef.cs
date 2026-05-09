@@ -402,7 +402,7 @@ namespace Pchp.CodeAnalysis.Semantics.TypeRef
                 type = (_arity <= 0)
                  ? (TypeSymbol)compilation.GlobalSemantics.ResolveType(ClassName)
                  // generic types only exist in external references, use this method to resolve the symbol including arity (needs metadataname instead of QualifiedName)
-                 : compilation.GlobalSemantics.GetTypeFromNonExtensionAssemblies(MetadataHelpers.ComposeAritySuffixedMetadataName(ClassName.ClrName(), _arity));
+                 : compilation.GlobalSemantics.GetTypeFromNonExtensionAssemblies(MetadataHelpers.ComposeAritySuffixedMetadataName(ClassName.ClrName(), _arity, associatedFileIdentifier: null));
             }
 
             var containingFile = _routine?.ContainingFile ?? _self?.ContainingFile;

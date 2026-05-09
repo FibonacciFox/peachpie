@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis.Emit;
+using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.CodeGen;
 using Pchp.CodeAnalysis.Emit;
 using System;
@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Cci = Microsoft.Cci;
+using Microsoft.CodeAnalysis.Symbols;
 
 namespace Pchp.CodeAnalysis.Symbols
 {
@@ -26,7 +27,7 @@ namespace Pchp.CodeAnalysis.Symbols
             var customModifiers = this.CustomModifiers;
             var isFixed = this.IsFixed;
             var implType = isFixed ? this.FixedImplementationType(moduleBeingBuilt) : this.Type;
-            var type = moduleBeingBuilt.Translate(implType, context.SyntaxNodeOpt, context.Diagnostics);
+            var type = moduleBeingBuilt.Translate(implType, context.SyntaxNode, context.Diagnostics);
 
             if (isFixed || customModifiers.Length == 0)
             {
@@ -79,7 +80,7 @@ namespace Pchp.CodeAnalysis.Symbols
 
             if (!this.IsDefinition)
             {
-                return moduleBeingBuilt.Translate(this.ContainingType, context.SyntaxNodeOpt, context.Diagnostics);
+                return moduleBeingBuilt.Translate(this.ContainingType, context.SyntaxNode, context.Diagnostics);
             }
 
             return (Cci.ITypeReference)this.ContainingType;
@@ -126,6 +127,12 @@ namespace Pchp.CodeAnalysis.Symbols
             }
         }
 
+        ImmutableArray<Cci.ICustomModifier> Cci.IFieldReference.RefCustomModifiers => ImmutableArray<Cci.ICustomModifier>.Empty;
+
+        bool Cci.IFieldReference.IsByReference => false;
+
+        bool Cci.IDefinition.IsEncDeleted => false;
+
         MetadataConstant Cci.IFieldDefinition.GetCompileTimeValue(EmitContext context)
         {
             CheckDefinitionInvariant();
@@ -145,7 +152,7 @@ namespace Pchp.CodeAnalysis.Symbols
                 // (and we specifically don't want to prevent metadata-only emit because of a bad
                 // constant).  If the constant value is bad, we'll end up exposing null to CCI.
                 return ((PEModuleBuilder)context.Module).CreateConstant(this.Type, this.ConstantValue,
-                                                               syntaxNodeOpt: context.SyntaxNodeOpt,
+                                                               SyntaxNode: context.SyntaxNode,
                                                                diagnostics: context.Diagnostics);
             }
 

@@ -35,6 +35,8 @@ namespace Pchp.CodeAnalysis.Emit
             }
         }
 
+        string Cci.INamedTypeReference.AssociatedFileIdentifier => null;
+
         string Cci.INamedEntity.Name
         {
             get
@@ -141,5 +143,7 @@ namespace Pchp.CodeAnalysis.Emit
         {
             return null;
         }
+
+        Microsoft.CodeAnalysis.Symbols.ISymbolInternal Cci.IReference.GetInternalSymbol() => UnderlyingNamedType;
     }
 }

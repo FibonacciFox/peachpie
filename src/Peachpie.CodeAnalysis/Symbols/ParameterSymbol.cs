@@ -7,10 +7,11 @@ using System.Threading.Tasks;
 using System.Collections.Immutable;
 using Pchp.CodeAnalysis.Semantics;
 using Peachpie.CodeAnalysis.Symbols;
+using Microsoft.CodeAnalysis.Symbols;
 
 namespace Pchp.CodeAnalysis.Symbols
 {
-    internal abstract partial class ParameterSymbol : Symbol, IParameterSymbol, IPhpValue
+    internal abstract partial class ParameterSymbol : Symbol, IParameterSymbol, IParameterSymbolInternal, IPhpValue
     {
         public virtual ImmutableArray<CustomModifier> CustomModifiers => ImmutableArray<CustomModifier>.Empty;
 
@@ -75,6 +76,10 @@ namespace Pchp.CodeAnalysis.Symbols
 
         public virtual RefKind RefKind => RefKind.None;
 
+        ITypeSymbolInternal IParameterSymbolInternal.Type => Type;
+
+        RefKind IParameterSymbolInternal.RefKind => RefKind;
+
         ITypeSymbol IParameterSymbol.Type => Type;
 
         internal virtual TypeSymbol Type
@@ -127,6 +132,8 @@ namespace Pchp.CodeAnalysis.Symbols
         bool IParameterSymbol.IsDiscard => false;
 
         NullableAnnotation IParameterSymbol.NullableAnnotation => NullableAnnotation.None;
+
+        ScopedKind IParameterSymbol.ScopedKind => ScopedKind.None;
 
         /// <summary>
         /// Helper method that checks whether this parameter can be passed to anothers method parameter.

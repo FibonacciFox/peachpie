@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Emit;
+using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.Text;
 using Roslyn.Utilities;
 using System;
@@ -95,7 +96,16 @@ namespace Pchp.CodeAnalysis.CommandLine
             var gindex = path.IndexOf('*');
             if (gindex < 0)
             {
-                return ParseFileArgument(path, baseDirectory, diagnostics).Select(file => ToCommandLineSourceFile(file));
+                var files = ArrayBuilder<string>.GetInstance();
+                try
+                {
+                    ParseFileArgument(path.AsMemory(), baseDirectory, files, diagnostics);
+                    return files.Select(file => ToCommandLineSourceFile(file)).ToArray();
+                }
+                finally
+                {
+                    files.Free();
+                }
             }
 
             var dir = baseDirectory;
@@ -159,17 +169,26 @@ namespace Pchp.CodeAnalysis.CommandLine
             // we don't care about empty folders reported as file not found,
             // this error is ment for cases where no files are enumerated at all
 
-            return
-                ParseFileArgument(path, dir, new ConditionalList<Diagnostic>(errors, (err) => err.Code != MessageProvider.ERR_FileNotFound))
-                    .Select(file => ToCommandLineSourceFile(file));
+            var files = ArrayBuilder<string>.GetInstance();
+            try
+            {
+                ParseFileArgument(path.AsMemory(), dir, files, new ConditionalList<Diagnostic>(errors, (err) => err.Code != MessageProvider.ERR_FileNotFound));
+                return files.Select(file => ToCommandLineSourceFile(file)).ToArray();
+            }
+            finally
+            {
+                files.Free();
+            }
         }
 
         internal override CommandLineArguments CommonParse(IEnumerable<string> args, string baseDirectory, string sdkDirectoryOpt, string additionalReferenceDirectories)
         {
             List<Diagnostic> diagnostics = new List<Diagnostic>();
-            List<string> flattenedArgs = new List<string>();
+            var flattenedArgs = ArrayBuilder<string>.GetInstance();
             List<string> scriptArgs = IsScriptCommandLineParser ? new List<string>() : null;
-            FlattenArgs(args, diagnostics, flattenedArgs, scriptArgs, baseDirectory);
+            try
+            {
+                FlattenArgs(args, diagnostics, flattenedArgs, scriptArgs, baseDirectory);
 
             var sourceFiles = new List<CommandLineSourceFile>();
             var metadataReferences = new List<CommandLineReference>();
@@ -177,7 +196,7 @@ namespace Pchp.CodeAnalysis.CommandLine
             var analyzerConfigPaths = new List<string>();
             var additionalFiles = new List<CommandLineSourceFile>();
             var embeddedFiles = new List<CommandLineSourceFile>();
-            var managedResources = new List<ResourceDescription>();
+            var managedResources = new List<CommandLineResource>();
             var assemblyAttributes = new List<AST.IAttributeElement>();
             var defines = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             string outputDirectory = baseDirectory;
@@ -651,9 +670,9 @@ namespace Pchp.CodeAnalysis.CommandLine
                         }
 
                         var embeddedResource = ParseResourceDescription(arg, value, baseDirectory, diagnostics, embedded: true);
-                        if (embeddedResource != null)
+                        if (embeddedResource.HasValue)
                         {
-                            managedResources.Add(embeddedResource);
+                            managedResources.Add(embeddedResource.Value);
                             resourcesOrModulesSpecified = true;
                         }
 
@@ -667,9 +686,9 @@ namespace Pchp.CodeAnalysis.CommandLine
                         }
 
                         var linkedResource = ParseResourceDescription(arg, value, baseDirectory, diagnostics, embedded: false);
-                        if (linkedResource != null)
+                        if (linkedResource.HasValue)
                         {
-                            managedResources.Add(linkedResource);
+                            managedResources.Add(linkedResource.Value);
                             resourcesOrModulesSpecified = true;
                         }
 
@@ -948,7 +967,7 @@ namespace Pchp.CodeAnalysis.CommandLine
                 //NoWin32Manifest = noWin32Manifest,
                 DisplayLogo = displayLogo,
                 DisplayHelp = displayHelp,
-                ManifestResources = managedResources.AsImmutable(),
+                ManifestResourceArguments = managedResources.AsImmutable(),
                 CompilationOptions = options,
                 ParseOptions = IsScriptCommandLineParser ? scriptParseOptions : parseOptions,
                 EmitOptions = emitOptions,
@@ -961,6 +980,11 @@ namespace Pchp.CodeAnalysis.CommandLine
                 //ReportAnalyzer = reportAnalyzer
                 EmbeddedFiles = embeddedFiles.AsImmutable(),
             };
+            }
+            finally
+            {
+                flattenedArgs.Free();
+            }
         }
 
         private void GetCompilationAndModuleNames(
@@ -1212,24 +1236,28 @@ namespace Pchp.CodeAnalysis.CommandLine
             }
         }
 
-        internal static ResourceDescription ParseResourceDescription(
+        internal static CommandLineResource? ParseResourceDescription(
             string arg,
             string resourceDescriptor,
             string baseDirectory,
             IList<Diagnostic> diagnostics,
             bool embedded)
         {
-            ParseResourceDescription(
-                resourceDescriptor,
+            if (!TryParseResourceDescription(
+                resourceDescriptor.AsMemory(),
                 baseDirectory,
-                false,
+                skipLeadingSeparators: false,
+                allowEmptyAccessibility: false,
                 out string filePath,
                 out string fullPath,
                 out string fileName,
                 out string resourceName,
-                out string accessibility);
+                out bool? isPublic,
+                out string accessibility))
+            {
+                return null;
+            }
 
-            bool isPublic;
             if (accessibility == null)
             {
                 // If no accessibility is given, we default to "public".
@@ -1268,7 +1296,7 @@ namespace Pchp.CodeAnalysis.CommandLine
                 // For example, it is an XML doc file produced by the build.
                 return new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             };
-            return new ResourceDescription(resourceName, fileName, dataProvider, isPublic, embedded, checkArgs: false);
+            return new CommandLineResource(resourceName, fullPath, embedded ? null : fileName, isPublic == true);
         }
 
         static IObserver<object> CreateObserver(string name, string moduleName)

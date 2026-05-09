@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +18,8 @@ namespace Pchp.CodeAnalysis.Symbols
         Cci.IParameterTypeInformation,
         Cci.IParameterDefinition
     {
+        bool Cci.IDefinition.IsEncDeleted => false;
+
         ImmutableArray<Cci.ICustomModifier> Cci.IParameterTypeInformation.CustomModifiers => this.CustomModifiers.As<Cci.ICustomModifier>();
 
         ImmutableArray<Cci.ICustomModifier> Cci.IParameterTypeInformation.RefCustomModifiers => this.RefCustomModifiers.As<Cci.ICustomModifier>();
@@ -64,7 +66,7 @@ namespace Pchp.CodeAnalysis.Symbols
             }
 
             return ((PEModuleBuilder)context.Module).CreateConstant(type, constant.Value,
-                                                           syntaxNodeOpt: context.SyntaxNodeOpt,
+                                                           SyntaxNode: context.SyntaxNode,
                                                            diagnostics: context.Diagnostics);
         }
 

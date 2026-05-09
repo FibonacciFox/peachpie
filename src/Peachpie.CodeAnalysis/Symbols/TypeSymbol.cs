@@ -39,6 +39,12 @@ namespace Pchp.CodeAnalysis.Symbols
 
         bool ITypeSymbol.IsReadOnly => false;
 
+        bool ITypeSymbol.IsExtension => false;
+
+        IParameterSymbol ITypeSymbol.ExtensionParameter => null;
+
+        bool ITypeSymbol.IsRecord => false;
+
         NullableAnnotation ITypeSymbol.NullableAnnotation => NullableAnnotation.None;
 
         string ITypeSymbol.ToDisplayString(NullableFlowState topLevelNullability, SymbolDisplayFormat format)
@@ -69,6 +75,8 @@ namespace Pchp.CodeAnalysis.Symbols
         #endregion
 
         ITypeSymbol ITypeSymbolInternal.GetITypeSymbol() => this;
+
+        ExtendedSpecialType ITypeSymbolInternal.ExtendedSpecialType => this.SpecialType;
 
         internal NamedTypeSymbol BaseTypeWithDefinitionUseSiteDiagnostics(ref HashSet<DiagnosticInfo> useSiteDiagnostics)
         {

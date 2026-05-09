@@ -6,5 +6,6 @@ namespace Pchp.CodeAnalysis.Symbols
     {
         Cci.INamespace Cci.INamespace.ContainingNamespace => this.ContainingNamespace as Cci.INamespace;
         string Cci.INamedEntity.Name => MetadataName;
+        Microsoft.CodeAnalysis.Symbols.INamespaceSymbolInternal Cci.INamespace.GetInternalSymbol() => this;
     }
 }

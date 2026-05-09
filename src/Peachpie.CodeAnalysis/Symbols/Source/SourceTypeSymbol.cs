@@ -1315,7 +1315,7 @@ namespace Pchp.CodeAnalysis.Symbols
                 if (MangleName)
                 {
                     // `1 at the end
-                    name = MetadataHelpers.ComposeAritySuffixedMetadataName(name, Arity);
+                    name = MetadataHelpers.ComposeAritySuffixedMetadataName(name, Arity, associatedFileIdentifier: null);
                 }
 
                 return name;

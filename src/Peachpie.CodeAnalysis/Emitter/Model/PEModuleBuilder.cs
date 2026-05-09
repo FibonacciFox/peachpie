@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -22,7 +22,7 @@ using Pchp.CodeAnalysis.Semantics;
 
 namespace Pchp.CodeAnalysis.Emit
 {
-    internal abstract partial class PEModuleBuilder : CommonPEModuleBuilder, ITokenDeferral
+    internal abstract partial class PEModuleBuilder : CommonPEModuleBuilder
     {
         private readonly SourceModuleSymbol _sourceModule;
         private readonly PhpCompilation _compilation;
@@ -81,10 +81,10 @@ namespace Pchp.CodeAnalysis.Emit
         internal MetadataConstant CreateConstant(
             TypeSymbol type,
             object value,
-            SyntaxNode syntaxNodeOpt,
+            SyntaxNode SyntaxNode,
             DiagnosticBag diagnostics)
         {
-            return new MetadataConstant(Translate(type, syntaxNodeOpt, diagnostics), value);
+            return new MetadataConstant(Translate(type, SyntaxNode, diagnostics), value);
         }
 
         #endregion
@@ -124,11 +124,13 @@ namespace Pchp.CodeAnalysis.Emit
             throw new NotImplementedException();
         }
 
+        internal override SynthesizedTypeMaps GetAllSynthesizedTypes() => Compilation.AnonymousTypeManager.GetSynthesizedTypeMaps();
+
         #endregion
 
         internal SourceModuleSymbol SourceModule => _sourceModule;
 
-        public ArrayMethods ArrayMethods
+        public new ArrayMethods ArrayMethods
         {
             get
             {
@@ -136,7 +138,19 @@ namespace Pchp.CodeAnalysis.Emit
             }
         }
 
-        public override int CurrentGenerationOrdinal => 0; // used for EditAndContinue
+        public override SymbolChanges EncSymbolChanges => null;
+
+        public override bool FieldRvaSupported => true;
+
+        public override bool MethodImplSupported => true;
+
+        public override EmitBaseline PreviousGeneration => null;
+
+        public override IMethodSymbolInternal GetOrCreateHotReloadExceptionConstructorDefinition() => throw new NotSupportedException();
+
+        public override INamedTypeSymbolInternal TryGetOrCreateSynthesizedHotReloadExceptionType() => null;
+
+        public override INamedTypeSymbolInternal GetUsedSynthesizedHotReloadExceptionType() => null;
 
         public sealed override IEnumerable<Cci.ICustomAttribute> GetSourceAssemblyAttributes(bool isRefAssembly)
         {
@@ -326,7 +340,7 @@ namespace Pchp.CodeAnalysis.Emit
                     bool areLocalsZeroed = true;
 
                     var cctor = SynthesizedManager.EnsureStaticCtor(container); // ensure .cctor is declared
-                    _cctorBuilders[container] = il = new ILBuilder(this, new LocalSlotManager(null), _compilation.Options.OptimizationLevel.AsOptimizationLevel(), areLocalsZeroed);
+                    _cctorBuilders[container] = il = new ILBuilder(this, new LocalSlotManager(null), DiagnosticBag.GetInstance(), _compilation.Options.OptimizationLevel.AsOptimizationLevel(), areLocalsZeroed);
                 }
             }
 
@@ -430,19 +444,31 @@ namespace Pchp.CodeAnalysis.Emit
             throw new NotImplementedException();
         }
 
-        public override ImmutableArray<Cci.ExportedType> GetExportedTypes(DiagnosticBag diagnostics)
+        public override ImmutableArray<Cci.ExportedType> GetExportedTypes(EmitContext context)
         {
             return ImmutableArray<Cci.ExportedType>.Empty; // throw new NotImplementedException();
         }
 
-        public Cci.IFieldReference GetFieldForData(ImmutableArray<byte> data, SyntaxNode syntaxNode, DiagnosticBag diagnostics)
+        public override Cci.IFieldReference GetFieldForData(ImmutableArray<byte> data, ushort alignment, SyntaxNode syntaxNode, DiagnosticBag diagnostics)
         {
-            Debug.Assert(this.SupportsPrivateImplClass);
-
             var privateImpl = this.GetPrivateImplClass(syntaxNode, diagnostics);
 
             // map a field to the block (that makes it addressable via a token)
-            return privateImpl.CreateDataField(data);
+            return privateImpl.GetOrAddDataField(data, alignment);
+        }
+
+        public override Cci.IFieldReference GetArrayCachingFieldForData(ImmutableArray<byte> data, Cci.IArrayTypeReference arrayType, SyntaxNode syntaxNode, DiagnosticBag diagnostics)
+        {
+            var privateImpl = this.GetPrivateImplClass(syntaxNode, diagnostics);
+            var emitContext = new EmitContext(this, syntaxNode, diagnostics, metadataOnly: false, includePrivateMembers: true);
+            return privateImpl.CreateArrayCachingField(data, arrayType, emitContext);
+        }
+
+        public override Cci.IFieldReference GetArrayCachingFieldForConstants(ImmutableArray<ConstantValue> constants, Cci.IArrayTypeReference arrayType, SyntaxNode syntaxNode, DiagnosticBag diagnostics)
+        {
+            var privateImpl = this.GetPrivateImplClass(syntaxNode, diagnostics);
+            var emitContext = new EmitContext(this, syntaxNode, diagnostics, metadataOnly: false, includePrivateMembers: true);
+            return privateImpl.CreateArrayCachingField(constants, arrayType, emitContext);
         }
 
         public override ImmutableArray<Cci.UsedNamespaceOrType> GetImports()
@@ -450,7 +476,7 @@ namespace Pchp.CodeAnalysis.Emit
             return ImmutableArray<Cci.UsedNamespaceOrType>.Empty; // throw new NotImplementedException();
         }
 
-        public Cci.IMethodReference GetInitArrayHelper()
+        public override Cci.IMethodReference GetInitArrayHelper()
         {
             return (MethodSymbol)Compilation.GetWellKnownTypeMember(WellKnownMember.System_Runtime_CompilerServices_RuntimeHelpers__InitializeArrayArrayRuntimeFieldHandle);
         }
@@ -759,22 +785,31 @@ namespace Pchp.CodeAnalysis.Emit
 
         #region Private Implementation Details Type
 
-        internal PrivateImplementationDetails GetPrivateImplClass(SyntaxNode syntaxNodeOpt, DiagnosticBag diagnostics)
+        public override PrivateImplementationDetails GetFrozenPrivateImplementationDetails()
+        {
+            _privateImplementationDetails?.Freeze();
+            return _privateImplementationDetails;
+        }
+
+        public override IEnumerable<(Cci.ITypeDefinition, ImmutableArray<Cci.DebugSourceDocument>)> GetTypeToDebugDocumentMap(EmitContext context) =>
+            Enumerable.Empty<(Cci.ITypeDefinition, ImmutableArray<Cci.DebugSourceDocument>)>();
+
+        internal override PrivateImplementationDetails GetPrivateImplClass(SyntaxNode? SyntaxNode, DiagnosticBag diagnostics)
         {
             var result = _privateImplementationDetails;
 
-            if ((result == null) && this.SupportsPrivateImplClass)
+            if (result == null)
             {
                 result = new PrivateImplementationDetails(
                         this,
                         this.SourceModule.Name,
                         Compilation.GetSubmissionSlotIndex(),
-                        this.GetSpecialType(SpecialType.System_Object, syntaxNodeOpt, diagnostics),
-                        this.GetSpecialType(SpecialType.System_ValueType, syntaxNodeOpt, diagnostics),
-                        this.GetSpecialType(SpecialType.System_Byte, syntaxNodeOpt, diagnostics),
-                        this.GetSpecialType(SpecialType.System_Int16, syntaxNodeOpt, diagnostics),
-                        this.GetSpecialType(SpecialType.System_Int32, syntaxNodeOpt, diagnostics),
-                        this.GetSpecialType(SpecialType.System_Int64, syntaxNodeOpt, diagnostics),
+                        this.GetSpecialType(SpecialType.System_Object, SyntaxNode, diagnostics),
+                        this.GetSpecialType(SpecialType.System_ValueType, SyntaxNode, diagnostics),
+                        this.GetSpecialType(SpecialType.System_Byte, SyntaxNode, diagnostics),
+                        this.GetSpecialType(SpecialType.System_Int16, SyntaxNode, diagnostics),
+                        this.GetSpecialType(SpecialType.System_Int32, SyntaxNode, diagnostics),
+                        this.GetSpecialType(SpecialType.System_Int64, SyntaxNode, diagnostics),
                         Compilation.CreateCompilerGeneratedAttribute()); // SynthesizeAttribute(WellKnownMember.System_Runtime_CompilerServices_CompilerGeneratedAttribute__ctor)
 
                 if (Interlocked.CompareExchange(ref _privateImplementationDetails, result, null) != null)
@@ -791,18 +826,17 @@ namespace Pchp.CodeAnalysis.Emit
             get { return _privateImplementationDetails; }
         }
 
-        internal override bool SupportsPrivateImplClass
-        {
-            get { return true; }
-        }
-
         internal override IModuleSymbolInternal CommonSourceModule => SourceModule;
 
         #endregion
 
         static void AddTopLevelType(HashSet<string> names, Cci.INamespaceTypeDefinition type)
         {
-            names?.Add(MetadataHelpers.BuildQualifiedName(type.NamespaceName, Cci.MetadataWriter.GetMangledName(type)));
+            var genericParameterCount = ((Cci.INamedTypeReference)type).GenericParameterCount;
+            var metadataName = type.MangleName && genericParameterCount > 0
+                ? MetadataHelpers.ComposeAritySuffixedMetadataName(type.Name, genericParameterCount, type.AssociatedFileIdentifier)
+                : type.Name;
+            names?.Add(MetadataHelpers.BuildQualifiedName(type.NamespaceName, metadataName));
         }
 
         static void VisitTopLevelType(Cci.TypeReferenceIndexer noPiaIndexer, Cci.INamespaceTypeDefinition type)
@@ -837,7 +871,7 @@ namespace Pchp.CodeAnalysis.Emit
             return ImmutableArray<Cci.INamespaceTypeDefinition>.Empty; // throw new NotImplementedException();
         }
 
-        internal Cci.INamedTypeReference GetSpecialType(SpecialType specialType, SyntaxNode syntaxNodeOpt, DiagnosticBag diagnostics)
+        internal Cci.INamedTypeReference GetSpecialType(SpecialType specialType, SyntaxNode SyntaxNode, DiagnosticBag diagnostics)
         {
             Debug.Assert(diagnostics != null);
 
@@ -848,10 +882,10 @@ namespace Pchp.CodeAnalysis.Emit
             //{
             //    Symbol.ReportUseSiteDiagnostic(info,
             //                                   diagnostics,
-            //                                   syntaxNodeOpt != null ? syntaxNodeOpt.Location : NoLocation.Singleton);
+            //                                   SyntaxNode != null ? SyntaxNode.Location : NoLocation.Singleton);
             //}
 
-            return (Cci.INamedTypeReference)Translate(typeSymbol, syntaxNodeOpt, diagnostics, needDeclaration: true);
+            return (Cci.INamedTypeReference)Translate(typeSymbol, SyntaxNode, diagnostics, needDeclaration: true);
         }
 
         internal override Cci.IAssemblyReference Translate(IAssemblySymbolInternal iassembly, DiagnosticBag diagnostics)
@@ -938,14 +972,14 @@ namespace Pchp.CodeAnalysis.Emit
 
         //internal Cci.IMethodReference Translate(
         //    MethodSymbol methodSymbol,
-        //    SyntaxNode syntaxNodeOpt,
+        //    SyntaxNode SyntaxNode,
         //    DiagnosticBag diagnostics,
         //    BoundArgListOperator optArgList = null,
         //    bool needDeclaration = false)
         //{
         //    Debug.Assert(optArgList == null || (methodSymbol.IsVararg && !needDeclaration));
 
-        //    Cci.IMethodReference unexpandedMethodRef = Translate(methodSymbol, syntaxNodeOpt, diagnostics, needDeclaration);
+        //    Cci.IMethodReference unexpandedMethodRef = Translate(methodSymbol, SyntaxNode, diagnostics, needDeclaration);
 
         //    if (optArgList != null && optArgList.Arguments.Length > 0)
         //    {
@@ -956,7 +990,7 @@ namespace Pchp.CodeAnalysis.Emit
         //        {
         //            @params[i] = new ArgListParameterTypeInformation(ordinal,
         //                                                            !optArgList.ArgumentRefKindsOpt.IsDefaultOrEmpty && optArgList.ArgumentRefKindsOpt[i] != RefKind.None,
-        //                                                            Translate(optArgList.Arguments[i].Type, syntaxNodeOpt, diagnostics));
+        //                                                            Translate(optArgList.Arguments[i].Type, SyntaxNode, diagnostics));
         //            ordinal++;
         //        }
 
@@ -970,7 +1004,7 @@ namespace Pchp.CodeAnalysis.Emit
 
         internal Cci.IMethodReference Translate(
             MethodSymbol methodSymbol,
-            SyntaxNode syntaxNodeOpt,
+            SyntaxNode SyntaxNode,
             DiagnosticBag diagnostics,
             bool needDeclaration)
         {
@@ -1031,7 +1065,7 @@ namespace Pchp.CodeAnalysis.Emit
 
             //if (_embeddedTypesManagerOpt != null)
             //{
-            //    return _embeddedTypesManagerOpt.EmbedMethodIfNeedTo(methodSymbol, syntaxNodeOpt, diagnostics);
+            //    return _embeddedTypesManagerOpt.EmbedMethodIfNeedTo(methodSymbol, SyntaxNode, diagnostics);
             //}
 
             return methodSymbol;
@@ -1039,7 +1073,7 @@ namespace Pchp.CodeAnalysis.Emit
 
         internal Cci.IMethodReference TranslateOverriddenMethodReference(
             MethodSymbol methodSymbol,
-            SyntaxNode syntaxNodeOpt,
+            SyntaxNode SyntaxNode,
             DiagnosticBag diagnostics)
         {
             Cci.IMethodReference methodRef;
@@ -1072,7 +1106,7 @@ namespace Pchp.CodeAnalysis.Emit
 
                 //if (_embeddedTypesManagerOpt != null)
                 //{
-                //    methodRef = _embeddedTypesManagerOpt.EmbedMethodIfNeedTo(methodSymbol, syntaxNodeOpt, diagnostics);
+                //    methodRef = _embeddedTypesManagerOpt.EmbedMethodIfNeedTo(methodSymbol, SyntaxNode, diagnostics);
                 //}
                 //else
                 {
@@ -1091,21 +1125,21 @@ namespace Pchp.CodeAnalysis.Emit
             return param;
         }
 
-        internal sealed override Cci.ITypeReference Translate(ITypeSymbolInternal typeSymbol, SyntaxNode syntaxNodeOpt, DiagnosticBag diagnostics)
+        internal sealed override Cci.ITypeReference Translate(ITypeSymbolInternal typeSymbol, SyntaxNode SyntaxNode, DiagnosticBag diagnostics)
         {
             Debug.Assert(diagnostics != null);
 
             switch (typeSymbol.Kind)
             {
                 //case SymbolKind.DynamicType:
-                //    return Translate((DynamicTypeSymbol)typeSymbol, syntaxNodeOpt, diagnostics);
+                //    return Translate((DynamicTypeSymbol)typeSymbol, SyntaxNode, diagnostics);
 
                 case SymbolKind.ArrayType:
                     return Translate((ArrayTypeSymbol)typeSymbol);
 
                 case SymbolKind.ErrorType:
                 case SymbolKind.NamedType:
-                    return Translate((NamedTypeSymbol)typeSymbol, syntaxNodeOpt, diagnostics);
+                    return Translate((NamedTypeSymbol)typeSymbol, SyntaxNode, diagnostics);
 
                 case SymbolKind.PointerType:
                     return Translate((PointerTypeSymbol)typeSymbol);
@@ -1119,7 +1153,7 @@ namespace Pchp.CodeAnalysis.Emit
 
         internal Cci.IFieldReference Translate(
             FieldSymbol fieldSymbol,
-            SyntaxNode syntaxNodeOpt,
+            SyntaxNode SyntaxNode,
             DiagnosticBag diagnostics,
             bool needDeclaration = false)
         {
@@ -1150,7 +1184,7 @@ namespace Pchp.CodeAnalysis.Emit
 
             //if (_embeddedTypesManagerOpt != null)
             //{
-            //    return _embeddedTypesManagerOpt.EmbedFieldIfNeedTo(fieldSymbol, syntaxNodeOpt, diagnostics);
+            //    return _embeddedTypesManagerOpt.EmbedFieldIfNeedTo(fieldSymbol, SyntaxNode, diagnostics);
             //}
 
             return fieldSymbol;
@@ -1187,7 +1221,7 @@ namespace Pchp.CodeAnalysis.Emit
                 //// Try to decrease noise by not complaining about the same type over and over again.
                 //if (_reportedErrorTypesMap.Add(errorType))
                 //{
-                //    diagnostics.Add(new CSDiagnostic(diagInfo ?? new CSDiagnosticInfo(ErrorCode.ERR_BogusType, string.Empty), syntaxNodeOpt == null ? NoLocation.Singleton : syntaxNodeOpt.Location));
+                //    diagnostics.Add(new CSDiagnostic(diagInfo ?? new CSDiagnosticInfo(ErrorCode.ERR_BogusType, string.Empty), SyntaxNode == null ? NoLocation.Singleton : SyntaxNode.Location));
                 //}
 
                 //return CodeAnalysis.Emit.ErrorType.Singleton;
@@ -1265,7 +1299,7 @@ namespace Pchp.CodeAnalysis.Emit
 
             //if (_embeddedTypesManagerOpt != null)
             //{
-            //    return _embeddedTypesManagerOpt.EmbedTypeIfNeedTo(namedTypeSymbol, fromImplements, syntaxNodeOpt, diagnostics);
+            //    return _embeddedTypesManagerOpt.EmbedTypeIfNeedTo(namedTypeSymbol, fromImplements, SyntaxNode, diagnostics);
             //}
 
             return (Cci.ITypeReference)namedTypeSymbol;

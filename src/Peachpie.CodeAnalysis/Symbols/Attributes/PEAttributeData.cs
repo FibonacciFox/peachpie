@@ -98,7 +98,7 @@ namespace Pchp.CodeAnalysis.Symbols
                 TypedConstant[] lazyConstructorArguments = null;
                 KeyValuePair<string, TypedConstant>[] lazyNamedArguments = null;
 
-                if (!_decoder.GetCustomAttribute(_handle, out lazyConstructorArguments, out lazyNamedArguments))
+                if (!_decoder.GetCustomAttribute(_handle, AttributeConstructor, out lazyConstructorArguments, out lazyNamedArguments))
                 {
                     _lazyHasErrors = ThreeState.True;
                 }

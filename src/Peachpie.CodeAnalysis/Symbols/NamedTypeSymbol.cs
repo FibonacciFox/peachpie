@@ -36,7 +36,7 @@ namespace Pchp.CodeAnalysis.Symbols
         {
             get
             {
-                return MangleName ? MetadataHelpers.ComposeAritySuffixedMetadataName(Name, Arity) : Name;
+                return MangleName ? MetadataHelpers.ComposeAritySuffixedMetadataName(Name, Arity, associatedFileIdentifier: null) : Name;
             }
         }
 
@@ -156,6 +156,20 @@ namespace Pchp.CodeAnalysis.Symbols
         public virtual bool IsScriptClass => false;
 
         public virtual bool IsUnboundGenericType => false;
+
+        bool INamedTypeSymbol.IsFileLocal => false;
+
+        bool INamedTypeSymbol.IsExtension => false;
+
+        IParameterSymbol INamedTypeSymbol.ExtensionParameter => null;
+
+        string INamedTypeSymbol.ExtensionGroupingName => null;
+
+        string INamedTypeSymbol.ExtensionMarkerName => null;
+
+        ImmutableArray<ISymbolInternal> INamedTypeSymbolInternal.GetMembers() => GetMembers().Cast<ISymbolInternal>().ToImmutableArray();
+
+        ImmutableArray<ISymbolInternal> INamedTypeSymbolInternal.GetMembers(string name) => GetMembers(name).Cast<ISymbolInternal>().ToImmutableArray();
 
         public virtual IEnumerable<string> MemberNames
         {

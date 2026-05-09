@@ -10,6 +10,7 @@ using Pchp.CodeAnalysis.Semantics;
 using Pchp.CodeAnalysis.FlowAnalysis;
 using Pchp.CodeAnalysis.Semantics.Graph;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Diagnostics;
 using Devsense.PHP.Syntax;
 
@@ -177,6 +178,18 @@ namespace Pchp.CodeAnalysis.Symbols
 
         bool IMethodSymbol.ReturnsByRefReadonly => false;
 
+        SignatureCallingConvention IMethodSymbol.CallingConvention => SignatureCallingConvention.Default;
+
+        ImmutableArray<INamedTypeSymbol> IMethodSymbol.UnmanagedCallingConventionTypes => ImmutableArray<INamedTypeSymbol>.Empty;
+
+        MethodImplAttributes IMethodSymbol.MethodImplementationFlags => ImplementationAttributes;
+
+        bool IMethodSymbol.IsPartialDefinition => false;
+
+        bool IMethodSymbol.IsIterator => false;
+
+        IMethodSymbol IMethodSymbol.AssociatedExtensionImplementation => null;
+
         ImmutableArray<CustomModifier> IMethodSymbol.RefCustomModifiers => ImmutableArray<CustomModifier>.Empty;
 
         IMethodSymbol IMethodSymbol.Construct(params ITypeSymbol[] typeArguments) => Construct(typeArguments);
@@ -273,6 +286,8 @@ namespace Pchp.CodeAnalysis.Symbols
             throw new NotImplementedException();
         }
 
+        IMethodSymbol IMethodSymbol.ReduceExtensionMember(ITypeSymbol receiverType) => ReduceExtensionMethod(receiverType);
+
         IMethodSymbol IMethodSymbol.Construct(ImmutableArray<ITypeSymbol> typeArguments, ImmutableArray<NullableAnnotation> typeArgumentNullableAnnotations)
         {
             if (typeArgumentNullableAnnotations.All(annotation => annotation != NullableAnnotation.Annotated))
@@ -340,6 +355,38 @@ namespace Pchp.CodeAnalysis.Symbols
         IMethodSymbolInternal IMethodSymbolInternal.Construct(params ITypeSymbolInternal[] typeArguments) => Construct(typeArguments.CastToArray<ITypeSymbol>());
 
         bool IMethodSymbolInternal.IsIterator => false;     // Peachpie produces only PHP generators, which is of a different type.
+
+        ImmutableArray<IParameterSymbolInternal> IMethodSymbolInternal.Parameters => StaticCast<IParameterSymbolInternal>.From(Parameters);
+
+        bool IMethodSymbolInternal.HasDeclarativeSecurity => false;
+
+        bool IMethodSymbolInternal.IsAccessCheckedOnOverride => false;
+
+        bool IMethodSymbolInternal.IsExternal => IsExtern;
+
+        bool IMethodSymbolInternal.IsHiddenBySignature => HidesBaseMethodsByName;
+
+        bool IMethodSymbolInternal.IsMetadataNewSlot => !IsOverride;
+
+        bool IMethodSymbolInternal.IsPlatformInvoke => false;
+
+        bool IMethodSymbolInternal.IsMetadataFinal => IsSealed;
+
+        bool IMethodSymbolInternal.HasSpecialName => HasSpecialName;
+
+        bool IMethodSymbolInternal.HasRuntimeSpecialName => false;
+
+        bool IMethodSymbolInternal.RequiresSecurityObject => RequiresSecurityObject;
+
+        MethodImplAttributes IMethodSymbolInternal.ImplementationAttributes => ImplementationAttributes;
+
+        ISymbolInternal IMethodSymbolInternal.AssociatedSymbol => AssociatedSymbol as ISymbolInternal;
+
+        IMethodSymbolInternal IMethodSymbolInternal.PartialImplementationPart => PartialImplementationPart as IMethodSymbolInternal;
+
+        IMethodSymbolInternal IMethodSymbolInternal.PartialDefinitionPart => PartialDefinitionPart as IMethodSymbolInternal;
+
+        BlobHandle IMethodSymbolInternal.MetadataSignatureHandle => default;
 
         #endregion
     }

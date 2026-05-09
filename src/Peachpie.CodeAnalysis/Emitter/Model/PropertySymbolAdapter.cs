@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeGen;
 using Microsoft.CodeAnalysis.Emit;
 using Pchp.CodeAnalysis.Emit;
@@ -15,6 +15,8 @@ namespace Pchp.CodeAnalysis.Symbols
     internal partial class PropertySymbol : Cci.IPropertyDefinition
     {
         #region IPropertyDefinition Members
+
+        bool Cci.IDefinition.IsEncDeleted => false;
 
         IEnumerable<Cci.IMethodReference> Cci.IPropertyDefinition.GetAccessors(EmitContext context)
         {
@@ -177,7 +179,7 @@ namespace Pchp.CodeAnalysis.Symbols
         {
             CheckDefinitionInvariant();
             return ((PEModuleBuilder)context.Module).Translate(this.Type,
-                                                      syntaxNodeOpt: context.SyntaxNodeOpt,
+                                                      SyntaxNode: context.SyntaxNode,
                                                       diagnostics: context.Diagnostics);
         }
 

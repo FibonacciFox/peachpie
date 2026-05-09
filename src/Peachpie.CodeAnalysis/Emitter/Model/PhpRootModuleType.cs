@@ -10,6 +10,7 @@ using Roslyn.Utilities;
 using EmitContext = Microsoft.CodeAnalysis.Emit.EmitContext;
 using TypeDefinitionHandle = System.Reflection.Metadata.TypeDefinitionHandle;
 using Pchp.CodeAnalysis.Emit;
+using Microsoft.CodeAnalysis.Symbols;
 
 namespace Pchp.CodeAnalysis.Emit
 {
@@ -34,6 +35,10 @@ namespace Pchp.CodeAnalysis.Emit
             return SpecializedCollections.EmptyEnumerable<ICustomAttribute>();
         }
 
+        public ISymbolInternal GetInternalSymbol() => null;
+
+        public bool IsEncDeleted => false;
+
         public bool MangleName
         {
             get { return false; }
@@ -43,6 +48,8 @@ namespace Pchp.CodeAnalysis.Emit
         {
             get { return "<Module>"; }
         }
+
+        public string? AssociatedFileIdentifier => null;
 
         public ushort Alignment
         {

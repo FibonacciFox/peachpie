@@ -423,6 +423,8 @@ namespace Pchp.CodeAnalysis.Semantics
 
         IMethodSymbol IInvocationOperation.TargetMethod => TargetMethod;
 
+        ITypeSymbol IInvocationOperation.ConstrainedToType => null;
+
         /// <summary>
         /// <c>this</c> argument to be supplied to the method.
         /// </summary>
@@ -1182,6 +1184,8 @@ namespace Pchp.CodeAnalysis.Semantics
 
         bool IBinaryOperation.IsCompareText => false;
 
+        ITypeSymbol IBinaryOperation.ConstrainedToType => null;
+
         public bool UsesOperatorMethod => this.Operator != null;
 
         public override void Accept(OperationVisitor visitor)
@@ -1236,6 +1240,8 @@ namespace Pchp.CodeAnalysis.Semantics
         bool IUnaryOperation.IsLifted => false;
 
         bool IUnaryOperation.IsChecked => false;
+
+        ITypeSymbol IUnaryOperation.ConstrainedToType => null;
 
         public bool UsesOperatorMethod => OperatorMethod != null;
 
@@ -1346,6 +1352,8 @@ namespace Pchp.CodeAnalysis.Semantics
         public CommonConversion Conversion { get; set; }
 
         bool IConversionOperation.IsTryCast => false;
+
+        ITypeSymbol IConversionOperation.ConstrainedToType => null;
 
         public bool IsChecked { get; set; }
 
@@ -1498,6 +1506,8 @@ namespace Pchp.CodeAnalysis.Semantics
         bool IIncrementOrDecrementOperation.IsLifted => false;
 
         bool IIncrementOrDecrementOperation.IsChecked => false;
+
+        ITypeSymbol IIncrementOrDecrementOperation.ConstrainedToType => null;
 
         public BoundIncDecEx(BoundReferenceExpression target, bool isIncrement, bool isPostfix)
             : base(target, new BoundLiteral(1L).WithAccess(BoundAccess.Read), Ast.Operations.IncDec)
@@ -1655,6 +1665,8 @@ namespace Pchp.CodeAnalysis.Semantics
         bool ICompoundAssignmentOperation.IsLifted => false;
 
         bool ICompoundAssignmentOperation.IsChecked => false;
+
+        ITypeSymbol ICompoundAssignmentOperation.ConstrainedToType => null;
 
         CommonConversion ICompoundAssignmentOperation.InConversion => throw new NotSupportedException();
 
@@ -1964,6 +1976,8 @@ namespace Pchp.CodeAnalysis.Semantics
         IOperation IMemberReferenceOperation.Instance => Instance;
 
         bool IFieldReferenceOperation.IsDeclaration => throw new NotSupportedException();
+
+        ITypeSymbol IMemberReferenceOperation.ConstrainedToType => null;
 
         enum FieldType
         {

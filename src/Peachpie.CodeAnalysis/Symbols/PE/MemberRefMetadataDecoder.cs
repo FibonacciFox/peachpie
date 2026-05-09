@@ -155,9 +155,8 @@ namespace Pchp.CodeAnalysis.Symbols.PE
                             return null;
                         }
 
-                        ImmutableArray<ModifierInfo<TypeSymbol>> customModifiers;
-                        TypeSymbol type = this.DecodeFieldSignature(ref signaturePointer, out customModifiers);
-                        return FindFieldBySignature(targetTypeSymbol, memberName, customModifiers, type);
+                        FieldInfo<TypeSymbol> fieldInfo = this.DecodeFieldSignature(ref signaturePointer);
+                        return FindFieldBySignature(targetTypeSymbol, memberName, fieldInfo.CustomModifiers, fieldInfo.Type);
 
                     default:
                         // error: unexpected calling convention

@@ -260,6 +260,11 @@ namespace Pchp.CodeAnalysis
             return GetLineSpan(span, cancellationToken);
         }
 
+        public override IEnumerable<LineMapping> GetLineMappings(CancellationToken cancellationToken = default)
+        {
+            return Array.Empty<LineMapping>();
+        }
+
         public override SyntaxReference GetReference(SyntaxNode node)
         {
             throw new NotImplementedException();

@@ -119,7 +119,7 @@ namespace Pchp.CodeAnalysis.Symbols
         internal virtual NamedTypeSymbol GetDeclaredSpecialType(SpecialType type)
         {
             // TODO: cache SpecialType
-            return CorLibrary.GetTypeByMetadataName(type.GetMetadataName());
+            return CorLibrary.GetTypeByMetadataName(((ExtendedSpecialType)type).GetMetadataName());
         }
 
         /// <summary>
@@ -292,7 +292,7 @@ namespace Pchp.CodeAnalysis.Symbols
                 }
 
                 var descriptor = SpecialMembers.GetDescriptor(member);
-                NamedTypeSymbol type = GetDeclaredSpecialType((SpecialType)descriptor.DeclaringTypeId);
+                NamedTypeSymbol type = GetDeclaredSpecialType((SpecialType)descriptor.DeclaringSpecialType);
                 Symbol result = null;
 
                 if (!type.IsErrorType())
@@ -374,5 +374,15 @@ namespace Pchp.CodeAnalysis.Symbols
         {
             throw new NotImplementedException();
         }
+
+        IAssemblySymbolInternal IAssemblySymbolInternal.CorLibrary => CorLibrary;
+
+        IEnumerable<ImmutableArray<byte>> IAssemblySymbolInternal.GetInternalsVisibleToPublicKeys(string simpleName)
+            => Enumerable.Empty<ImmutableArray<byte>>();
+
+        IEnumerable<string> IAssemblySymbolInternal.GetInternalsVisibleToAssemblyNames()
+            => Enumerable.Empty<string>();
+
+        bool IAssemblySymbolInternal.AreInternalsVisibleToThisAssembly(IAssemblySymbolInternal otherAssembly) => false;
     }
 }

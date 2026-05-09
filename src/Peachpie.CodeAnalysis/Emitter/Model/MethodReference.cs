@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis.Emit;
@@ -40,14 +40,6 @@ namespace Pchp.CodeAnalysis.Emit
             get
             {
                 return (ushort)UnderlyingMethod.Arity;
-            }
-        }
-
-        bool Cci.IMethodReference.IsGeneric
-        {
-            get
-            {
-                return UnderlyingMethod.IsGenericMethod;
             }
         }
 
@@ -104,7 +96,7 @@ namespace Pchp.CodeAnalysis.Emit
 
         Cci.ITypeReference Cci.ISignature.GetType(EmitContext context)
         {
-            return ((PEModuleBuilder)context.Module).Translate(UnderlyingMethod.ReturnType, syntaxNodeOpt: context.SyntaxNodeOpt, diagnostics: context.Diagnostics);
+            return ((PEModuleBuilder)context.Module).Translate(UnderlyingMethod.ReturnType, SyntaxNode: context.SyntaxNode, diagnostics: context.Diagnostics);
         }
 
         public virtual Cci.IGenericMethodInstanceReference AsGenericMethodInstanceReference

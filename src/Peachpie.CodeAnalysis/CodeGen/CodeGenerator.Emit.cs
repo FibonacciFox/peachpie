@@ -929,7 +929,7 @@ namespace Pchp.CodeAnalysis.CodeGen
         internal TypeSymbol Emit_EmptyArray(TypeSymbol elementType)
         {
             // Array.Empty<elementType>()
-            var array_empty_T = ((MethodSymbol)this.DeclaringCompilation.GetWellKnownTypeMember(WellKnownMember.System_Array__Empty))
+            var array_empty_T = ((MethodSymbol)this.DeclaringCompilation.GetSpecialTypeMember(SpecialMember.System_Array__Empty))
                 .Construct(elementType);
 
             return EmitCall(ILOpCode.Call, array_empty_T);
@@ -4271,17 +4271,17 @@ namespace Pchp.CodeAnalysis.CodeGen
 
         public static void EmitSymbolToken(this ILBuilder il, PEModuleBuilder module, DiagnosticBag diagnostics, TypeSymbol symbol, SyntaxNode syntaxNode)
         {
-            il.EmitToken(module.Translate(symbol, syntaxNode, diagnostics), syntaxNode, diagnostics);
+            il.EmitToken(module.Translate(symbol, syntaxNode, diagnostics), syntaxNode);
         }
 
         public static void EmitSymbolToken(this ILBuilder il, PEModuleBuilder module, DiagnosticBag diagnostics, MethodSymbol symbol, SyntaxNode syntaxNode)
         {
-            il.EmitToken(module.Translate(symbol, syntaxNode, diagnostics, needDeclaration: false), syntaxNode, diagnostics);
+            il.EmitToken(module.Translate(symbol, syntaxNode, diagnostics, needDeclaration: false), syntaxNode);
         }
 
         public static void EmitSymbolToken(this ILBuilder il, PEModuleBuilder module, DiagnosticBag diagnostics, FieldSymbol symbol, SyntaxNode syntaxNode)
         {
-            il.EmitToken(module.Translate(symbol, syntaxNode, diagnostics), syntaxNode, diagnostics);
+            il.EmitToken(module.Translate(symbol, syntaxNode, diagnostics), syntaxNode);
         }
 
         public static void EmitValueDefault(this ILBuilder il, PEModuleBuilder module, DiagnosticBag diagnostics, LocalDefinition tmp)
@@ -4354,7 +4354,7 @@ namespace Pchp.CodeAnalysis.CodeGen
             }
 
             il.EmitOpCode(code, stack);
-            il.EmitToken(module.Translate(method, diagnostics, false), null, diagnostics);
+            il.EmitToken(module.Translate(method, diagnostics, false), null);
             return (code == ILOpCode.Newobj) ? method.ContainingType : method.ReturnType;
         }
 
@@ -4387,7 +4387,7 @@ namespace Pchp.CodeAnalysis.CodeGen
 
             // .ldfld/.ldsfld {f}
             cg.Builder.EmitOpCode(f.IsStatic ? ILOpCode.Ldsfld : ILOpCode.Ldfld);
-            cg.Builder.EmitToken(cg.Module.Translate(f, null, DiagnosticBag.GetInstance()), null, DiagnosticBag.GetInstance());
+            cg.Builder.EmitToken(cg.Module.Translate(f, null, DiagnosticBag.GetInstance()), null);
 
             //
             return f.Type;

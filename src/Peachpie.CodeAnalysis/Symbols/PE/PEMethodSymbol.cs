@@ -1003,9 +1003,13 @@ namespace Pchp.CodeAnalysis.Symbols
                 else
                 {
                     var result = uncommonFields._lazyObsoleteAttributeData;
-                    return ReferenceEquals(result, ObsoleteAttributeData.Uninitialized)
-                        ? InterlockedOperations.Initialize(ref uncommonFields._lazyObsoleteAttributeData, null, ObsoleteAttributeData.Uninitialized)
-                        : result;
+                    if (ReferenceEquals(result, ObsoleteAttributeData.Uninitialized))
+                    {
+                        Interlocked.CompareExchange(ref uncommonFields._lazyObsoleteAttributeData, null, ObsoleteAttributeData.Uninitialized);
+                        return uncommonFields._lazyObsoleteAttributeData;
+                    }
+
+                    return result;
                 }
             }
         }

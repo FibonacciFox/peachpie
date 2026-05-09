@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection.Metadata;
@@ -34,6 +34,12 @@ namespace Pchp.CodeAnalysis.Symbols
         {
             get { return this.IsValueType; }
         }
+
+        string Cci.INamedTypeReference.AssociatedFileIdentifier => null;
+
+        bool Cci.INestedTypeReference.InheritsEnclosingTypeTypeParameters => this.ContainingType?.IsGenericType ?? false;
+
+        bool Cci.IDefinition.IsEncDeleted => false;
 
         Cci.ITypeDefinition Cci.ITypeReference.GetResolvedType(EmitContext context)
         {
@@ -231,7 +237,7 @@ namespace Pchp.CodeAnalysis.Symbols
             }
 
             return ((object)baseType != null)
-                ? moduleBeingBuilt.Translate(baseType, null /* (SyntaxNode)context.SyntaxNodeOpt */, context.Diagnostics)
+                ? moduleBeingBuilt.Translate(baseType, null /* (SyntaxNode)context.SyntaxNode */, context.Diagnostics)
                 : null;
         }
 
@@ -277,7 +283,7 @@ namespace Pchp.CodeAnalysis.Symbols
                 {
                     foreach (var implemented in explicitImplementations)
                     {
-                        yield return new Cci.MethodImplementation(method, moduleBeingBuilt.TranslateOverriddenMethodReference(implemented, context.SyntaxNodeOpt, context.Diagnostics));
+                        yield return new Cci.MethodImplementation(method, moduleBeingBuilt.TranslateOverriddenMethodReference(implemented, context.SyntaxNode, context.Diagnostics));
                     }
                 }
 
@@ -288,7 +294,7 @@ namespace Pchp.CodeAnalysis.Symbols
                 //    // specify the override explicitly.
                 //    // This mostly affects accessors - C# ignores method interactions
                 //    // between accessors and non-accessors, whereas the runtime does not.
-                //    yield return new Microsoft.Cci.MethodImplementation(method, moduleBeingBuilt.TranslateOverriddenMethodReference((MethodSymbol)method.OverriddenMethod, context.SyntaxNodeOpt, context.Diagnostics));
+                //    yield return new Microsoft.Cci.MethodImplementation(method, moduleBeingBuilt.TranslateOverriddenMethodReference((MethodSymbol)method.OverriddenMethod, context.SyntaxNode, context.Diagnostics));
                 //}
                 //else if (method.MethodKind == MethodKind.Destructor && this.SpecialType != SpecialType.System_Object)
                 //{
@@ -303,7 +309,7 @@ namespace Pchp.CodeAnalysis.Symbols
                 //        MethodSymbol objectMethod = objectMember as MethodSymbol;
                 //        if ((object)objectMethod != null && objectMethod.MethodKind == MethodKind.Destructor)
                 //        {
-                //            yield return new Microsoft.Cci.MethodImplementation(method, moduleBeingBuilt.TranslateOverriddenMethodReference(objectMethod, context.SyntaxNodeOpt, context.Diagnostics));
+                //            yield return new Microsoft.Cci.MethodImplementation(method, moduleBeingBuilt.TranslateOverriddenMethodReference(objectMethod, context.SyntaxNode, context.Diagnostics));
                 //        }
                 //    }
                 //}
@@ -792,7 +798,7 @@ namespace Pchp.CodeAnalysis.Symbols
             if (!this.IsDefinition)
             {
                 return moduleBeingBuilt.Translate(this.ContainingType,
-                                                  syntaxNodeOpt: context.SyntaxNodeOpt,
+                                                  SyntaxNode: context.SyntaxNode,
                                                   diagnostics: context.Diagnostics);
             }
 
@@ -838,7 +844,7 @@ namespace Pchp.CodeAnalysis.Symbols
 
             for (int i = 0; i < arguments.Length; i++)
             {
-                var arg = moduleBeingBuilt.Translate(arguments[i], syntaxNodeOpt: context.SyntaxNodeOpt, diagnostics: context.Diagnostics);
+                var arg = moduleBeingBuilt.Translate(arguments[i], SyntaxNode: context.SyntaxNode, diagnostics: context.Diagnostics);
 
                 if (!modifiers.IsDefault && !modifiers[i].IsDefaultOrEmpty)
                 {

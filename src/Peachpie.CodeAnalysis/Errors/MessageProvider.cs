@@ -13,7 +13,7 @@ namespace Pchp.CodeAnalysis.Errors
     /// <summary>
     /// A <see cref="CommonMessageProvider"/> implementation for compilation errors stored in <see cref="ErrorCode"/>.
     /// </summary>
-    internal class MessageProvider : CommonMessageProvider, IObjectWritable
+    internal class MessageProvider : CommonMessageProvider
     {
         public static readonly MessageProvider Instance = new MessageProvider();
 
@@ -29,8 +29,6 @@ namespace Pchp.CodeAnalysis.Errors
         {
             get { return typeof(ErrorCode); }
         }
-
-        bool IObjectWritable.ShouldReuseInSerialization => false;
 
         public override int ERR_BadCompilationOptionValue => (int)ErrorCode.ERR_BadCompilationOptionValue;
 
@@ -114,6 +112,8 @@ namespace Pchp.CodeAnalysis.Errors
 
         public override int ERR_TooManyUserStrings => (int)ErrorCode.ERR_TooManyUserStrings;
 
+        public override int ERR_TooManyUserStrings_RestartRequired => (int)ErrorCode.ERR_TooManyUserStrings;
+
         public override int ERR_BadSourceCodeKind => (int)ErrorCode.ERR_BadSourceCodeKind;
 
         public override int ERR_BadDocumentationMode => (int)ErrorCode.ERR_BadDocumentationMode;
@@ -132,11 +132,23 @@ namespace Pchp.CodeAnalysis.Errors
 
         public override int ERR_ModuleEmitFailure => (int)ErrorCode.ERR_ModuleEmitFailure;
 
-        public override int ERR_EncUpdateFailedMissingAttribute => (int)ErrorCode.ERR_EncUpdateFailedMissingAttribute;
+        public int ERR_EncUpdateFailedMissingAttribute => (int)ErrorCode.ERR_EncUpdateFailedMissingAttribute;
+
+        public override int ERR_EncUpdateFailedMissingSymbol => (int)ErrorCode.ERR_EncUpdateFailedMissingAttribute;
+
+        public override int ERR_MethodImplAttributeAsyncCannotBeUsed => (int)ErrorCode.ERR_BadCompilationOptionValue;
+
+        public override int ERR_FunctionPointerTypesInAttributeNotSupported => (int)ErrorCode.ERR_BadCompilationOptionValue;
+
+        public override int ERR_DataSectionStringLiteralHashCollision => (int)ErrorCode.ERR_BadCompilationOptionValue;
+
+        public override int ERR_EncUpdateRequiresEmittingExplicitInterfaceImplementationNotSupportedByTheRuntime => (int)ErrorCode.ERR_BadCompilationOptionValue;
 
         public override int ERR_InvalidDebugInfo => (int)ErrorCode.ERR_InvalidDebugInfo;
 
         public override int ERR_BadAssemblyName => (int)ErrorCode.ERR_BadAssemblyName;
+
+        public override int? WRN_ByValArraySizeConstRequired => null;
 
         public override int ERR_MultipleAnalyzerConfigsInSameDir => (int)ErrorCode.ERR_MultipleAnalyzerConfigsInSameDir;
 
@@ -147,6 +159,12 @@ namespace Pchp.CodeAnalysis.Errors
         public override int WRN_AnalyzerCannotBeCreated => (int)ErrorCode.WRN_AnalyzerCannotBeCreated;
 
         public override int WRN_NoAnalyzerInAssembly => (int)ErrorCode.WRN_NoAnalyzerInAssembly;
+
+        public override int WRN_AnalyzerReferencesFramework => (int)ErrorCode.WRN_UnableToLoadAnalyzer;
+
+        public override int WRN_AnalyzerReferencesNewerCompiler => (int)ErrorCode.WRN_UnableToLoadAnalyzer;
+
+        public override int WRN_DuplicateAnalyzerReference => (int)ErrorCode.WRN_UnableToLoadAnalyzer;
 
         public override int WRN_NoConfigNotOnCommandLine => (int)ErrorCode.WRN_NoConfigNotOnCommandLine;
 
@@ -199,6 +217,8 @@ namespace Pchp.CodeAnalysis.Errors
             throw new NotImplementedException();
         }
 
+        public override bool GetIsEnabledByDefault(int code) => true;
+
         public override string GetHelpLink(int code)
         {
             throw new NotImplementedException();
@@ -241,12 +261,12 @@ namespace Pchp.CodeAnalysis.Errors
             return ErrorFacts.GetFormatString((ErrorCode)code, language);
         }
 
-        public override void ReportAttributeParameterRequired(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, string parameterName)
+        protected override void ReportAttributeParameterRequired(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, string parameterName)
         {
             throw new NotImplementedException();
         }
 
-        public override void ReportAttributeParameterRequired(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, string parameterName1, string parameterName2)
+        protected override void ReportAttributeParameterRequired(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, string parameterName1, string parameterName2)
         {
             throw new NotImplementedException();
         }
@@ -261,34 +281,30 @@ namespace Pchp.CodeAnalysis.Errors
             throw new NotImplementedException();
         }
 
-        public override void ReportInvalidAttributeArgument(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, int parameterIndex, AttributeData attribute)
+        protected override void ReportInvalidAttributeArgument(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, int parameterIndex, AttributeData attribute)
         {
             throw new NotImplementedException();
         }
 
-        public override void ReportInvalidNamedArgument(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, int namedArgumentIndex, ITypeSymbol attributeClass, string parameterName)
+        protected override void ReportInvalidNamedArgument(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, int namedArgumentIndex, ITypeSymbol attributeClass, string parameterName)
         {
             throw new NotImplementedException();
         }
 
-        public override void ReportMarshalUnmanagedTypeNotValidForFields(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, int parameterIndex, string unmanagedTypeName, AttributeData attribute)
+        protected override void ReportMarshalUnmanagedTypeNotValidForFields(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, int parameterIndex, string unmanagedTypeName, AttributeData attribute)
         {
             throw new NotImplementedException();
         }
 
-        public override void ReportMarshalUnmanagedTypeOnlyValidForFields(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, int parameterIndex, string unmanagedTypeName, AttributeData attribute)
+        protected override void ReportMarshalUnmanagedTypeOnlyValidForFields(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, int parameterIndex, string unmanagedTypeName, AttributeData attribute)
         {
             throw new NotImplementedException();
         }
 
-        public override void ReportParameterNotValidForType(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, int namedArgumentIndex)
+        protected override void ReportParameterNotValidForType(DiagnosticBag diagnostics, SyntaxNode attributeSyntax, int namedArgumentIndex)
         {
             throw new NotImplementedException();
         }
 
-        void IObjectWritable.WriteTo(ObjectWriter writer)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

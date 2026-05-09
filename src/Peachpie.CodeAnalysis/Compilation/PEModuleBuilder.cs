@@ -79,7 +79,7 @@ namespace Pchp.CodeAnalysis.Emit
                         args_place.EmitLoad(il);                                // args
 
                         il.EmitOpCode(ILOpCode.Call, +2);
-                        il.EmitToken(create_method, null, diagnostic);
+                        il.EmitToken(create_method, null);
                     }
                     else
                     {
@@ -90,7 +90,7 @@ namespace Pchp.CodeAnalysis.Emit
                         Debug.Assert(create_method.Parameters[0].Type == args_place.Type);
                         args_place.EmitLoad(il);    // args
                         il.EmitOpCode(ILOpCode.Call, +1);
-                        il.EmitToken(create_method, null, diagnostic);
+                        il.EmitToken(create_method, null);
                     }
 
                     il.EmitLocalStore(ctx_loc);
@@ -197,7 +197,7 @@ namespace Pchp.CodeAnalysis.Emit
                         // ctx.Dispose
                         il.EmitLocalLoad(ctx_loc);
                         il.EmitOpCode(ILOpCode.Call, -1);
-                        il.EmitToken(methods.Context.Dispose.Symbol, null, diagnostic);
+                        il.EmitToken(methods.Context.Dispose.Symbol, null);
                     }
                     il.CloseLocalScope();   // /Finally
                     il.CloseLocalScope();   // /TryCatch

@@ -18,6 +18,7 @@ using System.Reflection;
 using Pchp.CodeAnalysis.Utilities;
 using Microsoft.CodeAnalysis.Collections;
 using Peachpie.CodeAnalysis;
+using System.Threading;
 
 namespace Pchp.CodeAnalysis.CommandLine
 {
@@ -29,7 +30,7 @@ namespace Pchp.CodeAnalysis.CommandLine
         protected internal new PhpCommandLineArguments Arguments { get { return (PhpCommandLineArguments)base.Arguments; } }
 
         public PhpCompiler(CommandLineParser parser, string responseFile, string[] args, BuildPaths buildPaths, string additionalReferenceDirectories, IAnalyzerAssemblyLoader analyzerLoader)
-            : base(parser, responseFile, args, buildPaths, additionalReferenceDirectories, analyzerLoader)
+            : base(parser, responseFile, args, buildPaths, additionalReferenceDirectories, analyzerLoader, driverCache: null, fileSystem: null)
         {
             _tempDirectory = buildPaths.TempDirectory;
             _diagnosticFormatter = new CommandLineDiagnosticFormatter(buildPaths.WorkingDirectory, Arguments.PrintFullPaths);
@@ -60,7 +61,7 @@ namespace Pchp.CodeAnalysis.CommandLine
             public ResourceDescription Resources;
         }
 
-        public override Compilation CreateCompilation(TextWriter consoleOutput, TouchedFileLogger touchedFilesLogger, ErrorLogger errorLogger, ImmutableArray<AnalyzerConfigOptionsResult> analyzerConfigOptions)
+        public override Compilation CreateCompilation(TextWriter consoleOutput, TouchedFileLogger touchedFilesLogger, ErrorLogger errorLogger, ImmutableArray<AnalyzerConfigOptionsResult> analyzerConfigOptions, AnalyzerConfigOptionsResult globalConfigOptions)
         {
             bool hadErrors = false;
             var sourceFiles = Arguments.SourceFiles;
@@ -153,7 +154,7 @@ namespace Pchp.CodeAnalysis.CommandLine
 
             MetadataReferenceResolver referenceDirectiveResolver;
             var resolvedReferences = ResolveMetadataReferences(diagnostics, touchedFilesLogger, out referenceDirectiveResolver);
-            if (ReportDiagnostics(diagnostics, consoleOutput, errorLogger))
+            if (ReportDiagnostics(diagnostics, consoleOutput, errorLogger, compilation: null))
             {
                 return null;
             }
@@ -253,7 +254,7 @@ namespace Pchp.CodeAnalysis.CommandLine
 
                 if (diagnosticInfos.Count != 0)
                 {
-                    ReportDiagnostics(diagnosticInfos, consoleOutput, errorLogger);
+                    ReportDiagnostics(diagnosticInfos, consoleOutput, errorLogger, compilation: null);
                     hadErrors = true;
                 }
 
@@ -266,7 +267,7 @@ namespace Pchp.CodeAnalysis.CommandLine
 
                 if (result != null && result.Diagnostics.HasAnyErrors())
                 {
-                    ReportDiagnostics(result.Diagnostics, consoleOutput, errorLogger);
+                    ReportDiagnostics(result.Diagnostics, consoleOutput, errorLogger, compilation: null);
                     hadErrors = true;
                 }
 
@@ -336,14 +337,35 @@ namespace Pchp.CodeAnalysis.CommandLine
 
         internal string GetAssemblyFileVersion() => GetVersion();
 
-        protected override void ResolveAnalyzersFromArguments(List<DiagnosticInfo> diagnostics, CommonMessageProvider messageProvider, out ImmutableArray<DiagnosticAnalyzer> analyzers, out ImmutableArray<ISourceGenerator> generators)
+        protected override void ResolveAnalyzersFromArguments(List<DiagnosticInfo> diagnostics, CommonMessageProvider messageProvider, CompilationOptions compilationOptions, bool skipAnalyzers, out ImmutableArray<DiagnosticAnalyzer> analyzers, out ImmutableArray<ISourceGenerator> generators)
         {
-            Arguments.ResolveAnalyzersFromArguments(Constants.PhpLanguageName, diagnostics, messageProvider, AssemblyLoader, out analyzers, out generators);
+            if (skipAnalyzers)
+            {
+                analyzers = ImmutableArray<DiagnosticAnalyzer>.Empty;
+                generators = ImmutableArray<ISourceGenerator>.Empty;
+                return;
+            }
+
+            Arguments.ResolveAnalyzersFromArguments(Constants.PhpLanguageName, diagnostics, messageProvider, AssemblyLoader, compilationOptions, skipAnalyzers, out analyzers, out generators);
         }
 
         protected override bool TryGetCompilerDiagnosticCode(string diagnosticId, out uint code)
         {
             return TryGetCompilerDiagnosticCode(diagnosticId, "PHP", out code);
+        }
+
+        private protected override void DiagnoseBadAccesses(TextWriter consoleOutput, ErrorLogger errorLogger, Compilation compilation, ImmutableArray<Diagnostic> diagnostics)
+        {
+        }
+
+        private protected override GeneratorDriver CreateGeneratorDriver(string baseDirectory, ParseOptions parseOptions, ImmutableArray<ISourceGenerator> generators, AnalyzerConfigOptionsProvider analyzerConfigOptionsProvider, ImmutableArray<AdditionalText> additionalTexts, SourceHashAlgorithm checksumAlgorithm)
+        {
+            return new PhpGeneratorDriver((PhpParseOptions)parseOptions, generators, analyzerConfigOptionsProvider, additionalTexts, new GeneratorDriverOptions(disabledOutputs: IncrementalGeneratorOutputKind.Host, baseDirectory: baseDirectory) { ChecksumAlgorithm = checksumAlgorithm });
+        }
+
+        protected override string GetOutputFileName(Compilation compilation, CancellationToken cancellationToken)
+        {
+            return Arguments.OutputFileName;
         }
 
         internal override string GetToolName()

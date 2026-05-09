@@ -359,6 +359,16 @@ namespace Pchp.CodeAnalysis.Symbols
             get { return false; }
         }
 
+        bool IPropertySymbol.IsRequired => false;
+
+        IPropertySymbol IPropertySymbol.PartialDefinitionPart => null;
+
+        IPropertySymbol IPropertySymbol.PartialImplementationPart => null;
+
+        bool IPropertySymbol.IsPartialDefinition => false;
+
+        IPropertySymbol IPropertySymbol.ReduceExtensionMember(ITypeSymbol receiverType) => null;
+
         ImmutableArray<CustomModifier> IPropertySymbol.TypeCustomModifiers
         {
             get { return this.TypeCustomModifiers; }

@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis.Emit;
+using Microsoft.CodeAnalysis.Emit;
 using Pchp.CodeAnalysis.Symbols;
 using Cci = Microsoft.Cci;
 
@@ -17,8 +17,10 @@ namespace Pchp.CodeAnalysis.Emit
 
         Cci.ITypeReference Cci.ITypeMemberReference.GetContainingType(EmitContext context)
         {
-            return ((PEModuleBuilder)context.Module).Translate(UnderlyingNamedType.ContainingType, syntaxNodeOpt: context.SyntaxNodeOpt, diagnostics: context.Diagnostics);
+            return ((PEModuleBuilder)context.Module).Translate(UnderlyingNamedType.ContainingType, SyntaxNode: context.SyntaxNode, diagnostics: context.Diagnostics);
         }
+
+        bool Cci.INestedTypeReference.InheritsEnclosingTypeTypeParameters => UnderlyingNamedType.ContainingType?.IsGenericType ?? false;
 
         public override Cci.IGenericTypeInstanceReference AsGenericTypeInstanceReference
         {
