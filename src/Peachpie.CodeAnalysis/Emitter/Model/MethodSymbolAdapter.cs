@@ -276,6 +276,11 @@ namespace Pchp.CodeAnalysis.Symbols
             }
         }
 
+        internal virtual Cci.ITypeDefinition GetCciContainingTypeDefinition()
+        {
+            return (Cci.ITypeDefinition)this.ContainingType;
+        }
+
         Cci.ITypeDefinition Cci.ITypeDefinitionMember.ContainingTypeDefinition
         {
             get
@@ -288,7 +293,7 @@ namespace Pchp.CodeAnalysis.Symbols
                 //    return synthesizedGlobalMethod.ContainingPrivateImplementationDetailsType;
                 //}
 
-                return (Cci.ITypeDefinition)this.ContainingType;
+                return GetCciContainingTypeDefinition();
             }
         }
 
