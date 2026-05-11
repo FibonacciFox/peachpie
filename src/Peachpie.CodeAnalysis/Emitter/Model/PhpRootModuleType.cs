@@ -228,7 +228,7 @@ namespace Pchp.CodeAnalysis.Emit
 
         ushort INamedTypeReference.GenericParameterCount
         {
-            get { throw ExceptionUtilities.Unreachable; }
+            get { return 0; }
         }
 
         IUnitReference INamespaceTypeReference.GetUnit(EmitContext context)
