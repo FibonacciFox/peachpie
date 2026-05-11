@@ -650,10 +650,20 @@ namespace Pchp.CodeAnalysis.CodeGen
                 if (place != null && place.HasAddress && place.Type != null && place.Type.IsValueType)
                 {
                     var conv = DeclaringCompilation.Conversions.ClassifyConversion(place.Type, to, conversion);
-                    if (conv.Exists && conv.IsUserDefined && !conv.MethodSymbol.IsStatic && !conv.IsNullable)
+                    if (conv.Exists &&
+                        conv.IsUserDefined &&
+                        conv.MethodSymbol is MethodSymbol method &&
+                        !method.IsStatic &&
+                        !conv.IsNullable)
                     {
-                        // (ADDR expr).Method()
-                        this.EmitImplicitConversion(EmitCall(ILOpCode.Call, (MethodSymbol)conv.MethodSymbol, expr, ImmutableArray<BoundArgument>.Empty), to, @checked: true);
+                        Debug.Assert(method.MethodKind == MethodKind.Conversion);
+
+                        // Emit the instance conversion directly on the receiver address to avoid
+                        // materializing an intermediate value copy for the struct.
+                        this.EmitImplicitConversion(
+                            EmitCall(ILOpCode.Call, method, expr, ImmutableArray<BoundArgument>.Empty),
+                            to,
+                            @checked: true);
                         return;
                     }
                 }
