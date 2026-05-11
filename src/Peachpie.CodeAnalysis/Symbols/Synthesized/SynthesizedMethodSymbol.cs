@@ -112,7 +112,13 @@ namespace Pchp.CodeAnalysis.Symbols
 
         public override Symbol ContainingSymbol => _type as Symbol;
 
-        internal override Cci.ITypeDefinition GetCciContainingTypeDefinition() => _type;
+        /// <summary>
+        /// Returns the exact CCI container used to emit this synthesized method.
+        /// </summary>
+        internal override Cci.ITypeDefinition GetCciContainingTypeDefinition()
+        {
+            return _type;
+        }
 
         internal override ModuleSymbol ContainingModule => _module;
 

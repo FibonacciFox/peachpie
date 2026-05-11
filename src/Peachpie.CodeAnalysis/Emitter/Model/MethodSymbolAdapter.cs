@@ -276,6 +276,14 @@ namespace Pchp.CodeAnalysis.Symbols
             }
         }
 
+        /// <summary>
+        /// Gets the CCI containing type definition for method emission.
+        /// </summary>
+        /// <remarks>
+        /// Most methods are contained by a <see cref="NamedTypeSymbol"/> and can use
+        /// <see cref="Symbol.ContainingType"/> directly. Specialized synthesized methods may need
+        /// to override this when their CCI container is not exposed as a regular symbol.
+        /// </remarks>
         internal virtual Cci.ITypeDefinition GetCciContainingTypeDefinition()
         {
             return (Cci.ITypeDefinition)this.ContainingType;

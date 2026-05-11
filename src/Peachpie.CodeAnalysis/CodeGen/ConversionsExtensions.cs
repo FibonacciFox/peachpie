@@ -166,6 +166,16 @@ namespace Pchp.CodeAnalysis.CodeGen
             cg.Builder.EmitNumericConversion(fromcode, tocode, @checked);
         }
 
+        /// <summary>
+        /// Emits a classified conversion result, separating Roslyn conversions from PeachPie
+        /// helper-based adaptation calls that are still carried through classification.
+        /// </summary>
+        /// <param name="cg">Code generator.</param>
+        /// <param name="conversion">Classified conversion metadata.</param>
+        /// <param name="from">Type currently on the stack.</param>
+        /// <param name="to">Requested target type.</param>
+        /// <param name="op">Optional secondary operand used by helper calls.</param>
+        /// <param name="checked">Whether numeric conversions should be checked.</param>
         public static void EmitClassifiedConversion(this CodeGenerator cg, CommonConversion conversion, TypeSymbol from, TypeSymbol to, TypeSymbol op = null, bool @checked = false)
         {
             // PeachPie historically reused CommonConversion as a carrier for helper/operator methods
@@ -183,6 +193,12 @@ namespace Pchp.CodeAnalysis.CodeGen
         /// <summary>
         /// Emits a PeachPie helper/operator method used for adaptation, not a Roslyn conversion.
         /// </summary>
+        /// <param name="cg">Code generator.</param>
+        /// <param name="method">Helper or operator method implementing the adaptation.</param>
+        /// <param name="from">Type currently on the stack.</param>
+        /// <param name="to">Requested target type after the helper call.</param>
+        /// <param name="op">Optional secondary operand used by helper calls.</param>
+        /// <param name="checked">Whether numeric conversions should be checked.</param>
         public static void EmitMethodConversion(this CodeGenerator cg, MethodSymbol method, TypeSymbol from, TypeSymbol to, TypeSymbol op = null, bool @checked = false)
         {
             var ps = method.Parameters;
