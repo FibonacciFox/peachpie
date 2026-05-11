@@ -2334,15 +2334,7 @@ namespace Pchp.CodeAnalysis.Semantics
             var conv = cg.DeclaringCompilation.ClassifyExplicitConversion(t, target);
             if (conv.Exists == false)
             {
-                var helper = cg.DeclaringCompilation.Conversions.ResolveConversionHelper(
-                    t,
-                    target,
-                    ConversionKind.Explicit | ConversionKind.Implicit);
-                if (helper != null)
-                {
-                    cg.EmitMethodConversion(helper, t, target);
-                }
-                else if (t.IsVoid())
+                if (t.IsVoid())
                 {
                     if (target.IsValueType)
                     {
@@ -2366,7 +2358,18 @@ namespace Pchp.CodeAnalysis.Semantics
                 }
                 else
                 {
-                    throw cg.NotImplementedException($"Conversion from {t} to {target}");
+                    var helper = cg.DeclaringCompilation.Conversions.ResolveConversionHelper(
+                        t,
+                        target,
+                        ConversionKind.Explicit | ConversionKind.Implicit);
+                    if (helper != null)
+                    {
+                        cg.EmitMethodConversion(helper, t, target);
+                    }
+                    else
+                    {
+                        throw cg.NotImplementedException($"Conversion from {t} to {target}");
+                    }
                 }
             }
             else
