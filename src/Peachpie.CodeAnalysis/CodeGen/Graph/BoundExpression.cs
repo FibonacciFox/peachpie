@@ -2356,7 +2356,7 @@ namespace Pchp.CodeAnalysis.Semantics
             }
             else
             {
-                cg.EmitConversion(conv, t, target);
+                cg.EmitClassifiedConversion(conv, t, target);
             }
 
             //
@@ -5444,14 +5444,14 @@ namespace Pchp.CodeAnalysis.Semantics
                     // https://github.com/peachpiecompiler/peachpie/issues/816
                     // Template: <STACK> != null ? IsEmpty(STACK) : FALSE
                     cg.EmitNullCoalescing(
-                    notnullemitter: () => cg.EmitConversion(new CommonConversion(true, false, false, false, false, false, op, null), t, cg.CoreTypes.Boolean),
+                    notnullemitter: () => cg.EmitMethodConversion(op, t, cg.CoreTypes.Boolean),
                         nullemitter: () => cg.Builder.EmitBoolConstant(true)
                     );
                 }
                 else
                 {
                     // Template: IsEmpty(STACK)
-                    cg.EmitConversion(new CommonConversion(true, false, false, false, false, false, op, null), t, cg.CoreTypes.Boolean);
+                    cg.EmitMethodConversion(op, t, cg.CoreTypes.Boolean);
                 }
             }
             else
@@ -5570,7 +5570,7 @@ namespace Pchp.CodeAnalysis.Semantics
             var op = cg.Conversions.ResolveOperator(arrayType, false, new[] { "offsetExists" }, new[] { cg.CoreTypes.Operators.Symbol }, operand: indexType, target: cg.CoreTypes.Boolean);
             if (op != null)
             {
-                cg.EmitConversion(new CommonConversion(true, false, false, false, false, false, op, null), arrayType, cg.CoreTypes.Boolean, op: indexType);
+                cg.EmitMethodConversion(op, arrayType, cg.CoreTypes.Boolean, op: indexType);
                 return cg.CoreTypes.Boolean;
             }
             else

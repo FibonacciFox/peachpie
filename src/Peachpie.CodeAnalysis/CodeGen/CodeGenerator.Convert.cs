@@ -88,7 +88,7 @@ namespace Pchp.CodeAnalysis.CodeGen
             var conv = DeclaringCompilation.ClassifyCommonConversion(from, CoreTypes.PhpValue.Symbol);
             if (conv.IsImplicit)
             {
-                this.EmitConversion(conv, from, CoreTypes.PhpValue.Symbol);
+                this.EmitClassifiedConversion(conv, from, CoreTypes.PhpValue.Symbol);
             }
             else
             {
@@ -287,7 +287,7 @@ namespace Pchp.CodeAnalysis.CodeGen
             }
             else
             {
-                this.EmitConversion(conv, from, CoreTypes.PhpString.Symbol);
+                this.EmitClassifiedConversion(conv, from, CoreTypes.PhpString.Symbol);
             }
         }
 
@@ -691,7 +691,7 @@ namespace Pchp.CodeAnalysis.CodeGen
                 var conv = DeclaringCompilation.Conversions.ClassifyConversion(from, to, conversion);
                 if (conv.Exists)
                 {
-                    ConversionsExtensions.EmitConversion(this, conv, from, to, @checked: false);
+                    ConversionsExtensions.EmitClassifiedConversion(this, conv, from, to, @checked: false);
                 }
                 else
                 {

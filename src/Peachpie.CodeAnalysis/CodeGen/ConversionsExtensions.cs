@@ -35,7 +35,7 @@ namespace Pchp.CodeAnalysis.CodeGen
 
                 if (conv.Exists)
                 {
-                    EmitConversion(cg, conv, from, to, @checked: @checked);
+                    EmitClassifiedConversion(cg, conv, from, to, @checked: @checked);
                 }
                 else
                 {
@@ -166,6 +166,77 @@ namespace Pchp.CodeAnalysis.CodeGen
             cg.Builder.EmitNumericConversion(fromcode, tocode, @checked);
         }
 
+        public static void EmitClassifiedConversion(this CodeGenerator cg, CommonConversion conversion, TypeSymbol from, TypeSymbol to, TypeSymbol op = null, bool @checked = false)
+        {
+            if (!conversion.IsUserDefined && conversion.MethodSymbol is MethodSymbol method)
+            {
+                EmitMethodConversion(cg, method, from, to, op, @checked: @checked);
+                return;
+            }
+
+            EmitConversion(cg, conversion, from, to, op, @checked: @checked);
+        }
+
+        /// <summary>
+        /// Emits a PeachPie helper/operator method used for adaptation, not a Roslyn conversion.
+        /// </summary>
+        public static void EmitMethodConversion(this CodeGenerator cg, MethodSymbol method, TypeSymbol from, TypeSymbol to, TypeSymbol op = null, bool @checked = false)
+        {
+            var ps = method.Parameters;
+            int pconsumed = 0;
+
+            if (method.HasThis)
+            {
+                if (from.IsValueType)
+                {
+                    if (op != null || from.IsVoid())
+                    {
+                        throw new ArgumentException(nameof(op));
+                    }
+
+                    cg.EmitStructAddr(from);
+                }
+            }
+            else
+            {
+                if (ps[0].RefKind != RefKind.None) throw new InvalidOperationException();
+                if (from != ps[0].Type)
+                {
+                    if (op != null)
+                    {
+                        if (!ps[0].Type.IsAssignableFrom(from))
+                        {
+                            throw new ArgumentException(nameof(op));
+                        }
+                    }
+                    else
+                    {
+                        EmitImplicitConversion(cg, from, ps[0].Type, @checked: @checked);
+                    }
+                }
+                pconsumed++;
+            }
+
+            if (op != null)
+            {
+                if (ps.Length > pconsumed)
+                {
+                    EmitImplicitConversion(cg, op, ps[pconsumed].Type, @checked: @checked);
+                }
+                pconsumed++;
+            }
+
+            if (ps.Length > pconsumed && SpecialParameterSymbol.IsContextParameter(ps[pconsumed]))
+            {
+                cg.EmitLoadContext();
+                pconsumed++;
+            }
+
+            if (ps.Length != pconsumed) throw new InvalidOperationException();
+
+            EmitImplicitConversion(cg, cg.EmitCall(method.IsVirtual ? ILOpCode.Callvirt : ILOpCode.Call, method), to, @checked: true);
+        }
+
         /// <summary>
         /// Emits the given conversion. 'from' and 'to' matches the classified conversion.
         /// </summary>
@@ -210,7 +281,7 @@ namespace Pchp.CodeAnalysis.CodeGen
                     // Template: convert( tmp.GetValueOrDefault() )
                     cg.Builder.EmitLocalAddress(tmp);
                     cg.EmitCall(ILOpCode.Call, cg.DeclaringCompilation.System_Nullable_T_GetValueOrDefault(from)).Expect(ttype);
-                    EmitConversion(cg, conversion.WithIsNullable(false), ttype, to, op, @checked);
+                    EmitClassifiedConversion(cg, conversion.WithIsNullable(false), ttype, to, op, @checked);
 
                     // lblend:
                     cg.Builder.MarkLabel(lblend);
@@ -221,7 +292,7 @@ namespace Pchp.CodeAnalysis.CodeGen
                 if (to.IsNullableType(out ttype)) // NOTE: not used yet
                 {
                     // new Nullable<TType>( convert(from) )
-                    EmitConversion(cg, conversion.WithIsNullable(false), from, ttype, op, @checked);
+                    EmitClassifiedConversion(cg, conversion.WithIsNullable(false), from, ttype, op, @checked);
                     cg.EmitCall(ILOpCode.Newobj, ((NamedTypeSymbol)to).InstanceConstructors[0]); // new Nullable<T>( STACK )
                     return;
                 }
@@ -265,61 +336,7 @@ namespace Pchp.CodeAnalysis.CodeGen
             }
             else if (conversion.IsUserDefined)
             {
-                var method = (MethodSymbol)conversion.MethodSymbol;
-                var ps = method.Parameters;
-                int pconsumed = 0;
-
-                if (method.HasThis)
-                {
-                    if (from.IsValueType)
-                    {
-                        if (op != null || from.IsVoid())
-                        {
-                            throw new ArgumentException(nameof(op));
-                        }
-
-                        cg.EmitStructAddr(from);
-                    }
-                }
-                else
-                {
-                    if (ps[0].RefKind != RefKind.None) throw new InvalidOperationException();
-                    if (from != ps[0].Type)
-                    {
-                        if (op != null)
-                        {
-                            if (!ps[0].Type.IsAssignableFrom(from))
-                            {
-                                throw new ArgumentException(nameof(op));
-                            }
-                        }
-                        else
-                        {
-                            EmitImplicitConversion(cg, from, ps[0].Type, @checked: @checked);
-                        }
-                    }
-                    pconsumed++;
-                }
-
-                if (op != null)
-                {
-                    if (ps.Length > pconsumed)
-                    {
-                        EmitImplicitConversion(cg, op, ps[pconsumed].Type, @checked: @checked);
-                    }
-                    pconsumed++;
-                }
-
-                // Context ctx, 
-                if (ps.Length > pconsumed && SpecialParameterSymbol.IsContextParameter(ps[pconsumed]))
-                {
-                    cg.EmitLoadContext();
-                    pconsumed++;
-                }
-
-                if (ps.Length != pconsumed) throw new InvalidOperationException();
-
-                EmitImplicitConversion(cg, cg.EmitCall(method.IsVirtual ? ILOpCode.Callvirt : ILOpCode.Call, method), to, @checked: true);
+                EmitMethodConversion(cg, (MethodSymbol)conversion.MethodSymbol, from, to, op, @checked: @checked);
             }
             else
             {
@@ -329,7 +346,7 @@ namespace Pchp.CodeAnalysis.CodeGen
 
         public static CommonConversion WithIsNullable(this CommonConversion conv, bool isNullable)
         {
-            return new CommonConversion(conv.Exists, conv.IsIdentity, conv.IsNumeric, conv.IsReference, conv.IsImplicit, isNullable, conv.MethodSymbol, null);
+            return new CommonConversion(conv.Exists, conv.IsIdentity, conv.IsNumeric, conv.IsReference, conv.IsImplicit, isNullable, conv.MethodSymbol, conv.ConstrainedToType);
         }
     }
 }

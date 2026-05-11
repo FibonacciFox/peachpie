@@ -268,6 +268,12 @@ namespace Pchp.CodeAnalysis.Semantics
         public CommonConversion BoundConversion { get; internal set; } // TODO: make it nullable
 
         /// <summary>
+        /// Lazily resolved PeachPie helper/operator used to adapt the accessed value.
+        /// Unlike <see cref="BoundConversion"/>, this is not a Roslyn conversion.
+        /// </summary>
+        internal MethodSymbol BoundAccessMethod { get; set; }
+
+        /// <summary>
         /// Lazily resolved type of the expression,
         /// after applying the <see cref="Access"/>.
         /// </summary>
