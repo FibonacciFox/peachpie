@@ -695,8 +695,14 @@ namespace Pchp.CodeAnalysis.CodeGen
                 }
                 else
                 {
+                    if (from.SpecialType == SpecialType.System_String &&
+                        to.IsReadOnlySpan(DeclaringCompilation.GetSpecialType(SpecialType.System_Char)))
+                    {
+                        EmitCall(ILOpCode.Call, DeclaringCompilation.Conversions.StringToReadOnlySpanChar())
+                            .Expect(to);
+                    }
                     // specialized conversions:
-                    if (to == CoreTypes.PhpValue)
+                    else if (to == CoreTypes.PhpValue)
                     {
                         EmitConvertToPhpValue(from, fromHint);
                     }

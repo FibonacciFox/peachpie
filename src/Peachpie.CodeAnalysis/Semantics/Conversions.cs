@@ -181,14 +181,20 @@ namespace Pchp.CodeAnalysis.Semantics
                 return ExplicitNumeric;
         }
 
-        public CommonConversion StringToPhpString()
+        /// <summary>
+        /// Gets the helper method used to adapt <see cref="string"/> to <c>PhpString</c>.
+        /// </summary>
+        public MethodSymbol StringToPhpString()
         {
-                    return new CommonConversion(true, false, false, false, true, false, _compilation.CoreMethods.PhpString.implicit_from_string.Symbol, null);
+            return _compilation.CoreMethods.PhpString.implicit_from_string.Symbol;
         }
 
-        public CommonConversion StringToReadOnlySpanChar()
+        /// <summary>
+        /// Gets the helper method used to adapt <see cref="string"/> to <c>ReadOnlySpan&lt;char&gt;</c>.
+        /// </summary>
+        public MethodSymbol StringToReadOnlySpanChar()
         {
-                    return new CommonConversion(true, false, false, false, true, false, _compilation.CoreMethods.Operators.ToReadOnlySpanChar_String.Symbol, null);
+            return _compilation.CoreMethods.Operators.ToReadOnlySpanChar_String.Symbol;
         }
 
         // resolve operator method
@@ -228,22 +234,23 @@ namespace Pchp.CodeAnalysis.Semantics
                                 if (target != null && method.ReturnType != target)
                                 {
                                     var conv = ClassifyConversion(method.ReturnType, target, ConversionKind.Numeric | ConversionKind.Reference);
-                                    if (conv.Exists == false && method.ReturnType.SpecialType == SpecialType.System_String)
-                                    {
-                                        if (target.Is_PhpString())
-                                        {
-                                            // String -> PhpString implicitly
-                                            conv = StringToPhpString();
-                                        }
-                                        else if (target.IsReadOnlySpan(_compilation.GetSpecialType(SpecialType.System_Char)))
-                                        {
-                                            conv = StringToReadOnlySpanChar();
-                                        }
-                                    }
-
-                                    if (conv.Exists)    // TODO: chain the conversion, sum the cost
+                                    if (conv.Exists)
                                     {
                                         cost += ConvCost(conv, method.ReturnType, target);
+                                    }
+                                    else if (method.ReturnType.SpecialType == SpecialType.System_String)
+                                    {
+                                        if (target.Is_PhpString() ||
+                                            target.IsReadOnlySpan(_compilation.GetSpecialType(SpecialType.System_Char)))
+                                        {
+                                            // These adaptations are emitted through dedicated helper methods.
+                                            cost += 2;
+                                            cost_minor--;
+                                        }
+                                        else
+                                        {
+                                            continue;
+                                        }
                                     }
                                     else
                                     {
@@ -547,13 +554,13 @@ namespace Pchp.CodeAnalysis.Semantics
                 // string -> PhpString implicitly
                 if (from.SpecialType == SpecialType.System_String && to.Is_PhpString())
                 {
-                    return StringToPhpString();
+                    return NoConversion;
                 }
 
                 // string -> ReadOnlySpan<char> implicitly
                 if (from.SpecialType == SpecialType.System_String && to.IsReadOnlySpan(_compilation.GetSpecialType(SpecialType.System_Char)))
                 {
-                    return StringToReadOnlySpanChar();
+                    return NoConversion;
                 }
 
                 var op = TryWellKnownImplicitConversion(from, to) ?? ResolveOperator(from, false, ImplicitConversionOpNames(to), new[] { to, _compilation.CoreTypes.Convert.Symbol }, target: to);
