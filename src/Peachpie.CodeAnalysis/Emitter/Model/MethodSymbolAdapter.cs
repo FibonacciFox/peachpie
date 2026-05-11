@@ -281,12 +281,13 @@ namespace Pchp.CodeAnalysis.Symbols
         /// </summary>
         /// <remarks>
         /// Most methods are contained by a <see cref="NamedTypeSymbol"/> and can use
-        /// <see cref="Symbol.ContainingType"/> directly. Specialized synthesized methods may need
-        /// to override this when their CCI container is not exposed as a regular symbol.
+        /// <see cref="Symbol.ContainingType"/> directly. Some global or synthesized methods only
+        /// expose their CCI container through <see cref="Symbol.ContainingSymbol"/>, so callers
+        /// can override this when the default fallback is still insufficient.
         /// </remarks>
         internal virtual Cci.ITypeDefinition GetCciContainingTypeDefinition()
         {
-            return (Cci.ITypeDefinition)this.ContainingType;
+            return (Cci.ITypeDefinition)this.ContainingType ?? (Cci.ITypeDefinition)this.ContainingSymbol;
         }
 
         Cci.ITypeDefinition Cci.ITypeDefinitionMember.ContainingTypeDefinition
