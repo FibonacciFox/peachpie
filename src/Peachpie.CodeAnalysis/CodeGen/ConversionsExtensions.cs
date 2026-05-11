@@ -168,6 +168,9 @@ namespace Pchp.CodeAnalysis.CodeGen
 
         public static void EmitClassifiedConversion(this CodeGenerator cg, CommonConversion conversion, TypeSymbol from, TypeSymbol to, TypeSymbol op = null, bool @checked = false)
         {
+            // PeachPie historically reused CommonConversion as a carrier for helper/operator methods
+            // that are not Roslyn user-defined conversions. Route those through the explicit
+            // adaptation path so EmitConversion can stay aligned with Roslyn conversion semantics.
             if (!conversion.IsUserDefined && conversion.MethodSymbol is MethodSymbol method)
             {
                 EmitMethodConversion(cg, method, from, to, op, @checked: @checked);
@@ -199,6 +202,8 @@ namespace Pchp.CodeAnalysis.CodeGen
             }
             else
             {
+                // Static helpers still participate in the implicit argument adaptation pipeline
+                // before the helper call itself is emitted.
                 if (ps[0].RefKind != RefKind.None) throw new InvalidOperationException();
                 if (from != ps[0].Type)
                 {
@@ -228,6 +233,7 @@ namespace Pchp.CodeAnalysis.CodeGen
 
             if (ps.Length > pconsumed && SpecialParameterSymbol.IsContextParameter(ps[pconsumed]))
             {
+                // Helper methods may model PHP semantics through an explicit Context parameter.
                 cg.EmitLoadContext();
                 pconsumed++;
             }

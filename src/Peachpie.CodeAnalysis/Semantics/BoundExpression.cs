@@ -271,6 +271,10 @@ namespace Pchp.CodeAnalysis.Semantics
         /// Lazily resolved PeachPie helper/operator used to adapt the accessed value.
         /// Unlike <see cref="BoundConversion"/>, this is not a Roslyn conversion.
         /// </summary>
+        /// <remarks>
+        /// This keeps legacy PeachPie access helpers out of the Roslyn conversion model so the
+        /// migration can converge on the newer <see cref="CommonConversion"/> semantics.
+        /// </remarks>
         internal MethodSymbol BoundAccessMethod { get; set; }
 
         /// <summary>

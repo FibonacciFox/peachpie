@@ -85,6 +85,8 @@ namespace Pchp.CodeAnalysis.FlowAnalysis.Passes
                 var op = DeclaringCompilation.Conversions.ResolveOperator(type, hasref, new[] { opName }, new[] { DeclaringCompilation.CoreTypes.Operators.Symbol });
                 if (op != null)
                 {
+                    // This is an access adaptation helper such as EnsureAlias/EnsureObject/EnsureArray,
+                    // not a Roslyn conversion. Keep it separate from BoundConversion.
                     expression.BoundAccessMethod = op;
                     type = op.ReturnType;
                 }
