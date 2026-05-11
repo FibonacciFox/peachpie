@@ -178,8 +178,7 @@ namespace Pchp.CodeAnalysis.CodeGen
         }
 
         /// <summary>
-        /// Emits a classified conversion result, separating Roslyn conversions from PeachPie
-        /// helper-based adaptation calls that are still carried through classification.
+        /// Emits a classified conversion result using Roslyn conversion semantics only.
         /// </summary>
         /// <param name="cg">Code generator.</param>
         /// <param name="conversion">Classified conversion metadata.</param>
@@ -189,13 +188,9 @@ namespace Pchp.CodeAnalysis.CodeGen
         /// <param name="checked">Whether numeric conversions should be checked.</param>
         public static void EmitClassifiedConversion(this CodeGenerator cg, CommonConversion conversion, TypeSymbol from, TypeSymbol to, TypeSymbol op = null, bool @checked = false)
         {
-            // PeachPie historically reused CommonConversion as a carrier for helper/operator methods
-            // that are not Roslyn user-defined conversions. Route those through the explicit
-            // adaptation path so EmitConversion can stay aligned with Roslyn conversion semantics.
-            if (!conversion.IsUserDefined && conversion.MethodSymbol is MethodSymbol method)
+            if (!conversion.IsUserDefined && conversion.MethodSymbol != null)
             {
-                EmitMethodConversion(cg, method, from, to, op, @checked: @checked);
-                return;
+                throw new InvalidOperationException("Non-user-defined Roslyn conversions must not carry a method symbol.");
             }
 
             EmitConversion(cg, conversion, from, to, op, @checked: @checked);
