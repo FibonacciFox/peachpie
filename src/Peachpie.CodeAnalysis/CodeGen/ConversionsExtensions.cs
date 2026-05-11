@@ -39,7 +39,18 @@ namespace Pchp.CodeAnalysis.CodeGen
                 }
                 else
                 {
-                    return false;
+                    var helper = cg.DeclaringCompilation.Conversions.ResolveConversionHelper(
+                        from,
+                        to,
+                        strict ? ConversionKind.Strict | ConversionKind.Implicit : ConversionKind.Implicit);
+                    if (helper != null)
+                    {
+                        EmitMethodConversion(cg, helper, from, to, @checked: @checked);
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
             }
 

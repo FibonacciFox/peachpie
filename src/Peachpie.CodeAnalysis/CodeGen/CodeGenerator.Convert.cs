@@ -92,9 +92,19 @@ namespace Pchp.CodeAnalysis.CodeGen
             }
             else
             {
-                // some conversion we did not implement as operator yet:
+                var helper = DeclaringCompilation.Conversions.ResolveConversionHelper(
+                    from,
+                    CoreTypes.PhpValue.Symbol,
+                    ConversionKind.Implicit | ConversionKind.Explicit);
+                if (helper != null)
+                {
+                    // PhpValue has PeachPie-specific helper/operator conversions that no longer
+                    // travel through Roslyn CommonConversion.
+                    this.EmitMethodConversion(helper, from, CoreTypes.PhpValue.Symbol);
+                }
 
-                if (from.IsReferenceType)
+                // some conversion we did not implement as operator yet:
+                else if (from.IsReferenceType)
                 {
                     if (from.Is_IPhpArray()) // Blob or PhpArray
                     {
@@ -695,11 +705,10 @@ namespace Pchp.CodeAnalysis.CodeGen
                 }
                 else
                 {
-                    if (from.SpecialType == SpecialType.System_String &&
-                        to.IsReadOnlySpan(DeclaringCompilation.GetSpecialType(SpecialType.System_Char)))
+                    var helper = DeclaringCompilation.Conversions.ResolveConversionHelper(from, to, conversion);
+                    if (helper != null)
                     {
-                        EmitCall(ILOpCode.Call, DeclaringCompilation.Conversions.StringToReadOnlySpanChar())
-                            .Expect(to);
+                        ConversionsExtensions.EmitMethodConversion(this, helper, from, to, @checked: false);
                     }
                     // specialized conversions:
                     else if (to == CoreTypes.PhpValue)

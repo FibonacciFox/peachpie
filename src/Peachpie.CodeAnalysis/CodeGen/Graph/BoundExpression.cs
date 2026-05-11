@@ -2332,22 +2332,37 @@ namespace Pchp.CodeAnalysis.Semantics
             }
 
             var conv = cg.DeclaringCompilation.ClassifyExplicitConversion(t, target);
-            if (conv.Exists == false && t.IsVoid())
+            if (conv.Exists == false)
             {
-                if (target.IsValueType)
+                var helper = cg.DeclaringCompilation.Conversions.ResolveConversionHelper(
+                    t,
+                    target,
+                    ConversionKind.Explicit | ConversionKind.Implicit);
+                if (helper != null)
                 {
-                    // 0
-                    cg.EmitLoadDefault(target);
+                    cg.EmitMethodConversion(helper, t, target);
                 }
-                else if (target.SpecialType == SpecialType.System_String)
+                else if (t.IsVoid())
                 {
-                    // ""
-                    cg.Builder.EmitStringConstant(string.Empty);
-                }
-                else if (target.Is_PhpArray())
-                {
-                    // PhpArray(0)
-                    cg.Emit_PhpArray_NewEmpty();
+                    if (target.IsValueType)
+                    {
+                        // 0
+                        cg.EmitLoadDefault(target);
+                    }
+                    else if (target.SpecialType == SpecialType.System_String)
+                    {
+                        // ""
+                        cg.Builder.EmitStringConstant(string.Empty);
+                    }
+                    else if (target.Is_PhpArray())
+                    {
+                        // PhpArray(0)
+                        cg.Emit_PhpArray_NewEmpty();
+                    }
+                    else
+                    {
+                        throw cg.NotImplementedException($"Conversion from {t} to {target}");
+                    }
                 }
                 else
                 {

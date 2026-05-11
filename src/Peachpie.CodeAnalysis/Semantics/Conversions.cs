@@ -197,6 +197,53 @@ namespace Pchp.CodeAnalysis.Semantics
             return _compilation.CoreMethods.Operators.ToReadOnlySpanChar_String.Symbol;
         }
 
+        /// <summary>
+        /// Resolves a PeachPie helper method that implements conversion semantics outside the
+        /// Roslyn <see cref="CommonConversion"/> model.
+        /// </summary>
+        public MethodSymbol ResolveConversionHelper(TypeSymbol from, TypeSymbol to, ConversionKind kinds)
+        {
+            if ((kinds & ConversionKind.Strict) == ConversionKind.Strict)
+            {
+                var op = ResolveOperator(from, false, ImplicitConversionOpNames(to), new[] { _compilation.CoreTypes.StrictConvert.Symbol }, target: to);
+                if (op != null)
+                {
+                    return op;
+                }
+            }
+
+            if ((kinds & ConversionKind.Implicit) == ConversionKind.Implicit)
+            {
+                if (from.SpecialType == SpecialType.System_String && to.Is_PhpString())
+                {
+                    return StringToPhpString();
+                }
+
+                if (from.SpecialType == SpecialType.System_String && to.IsReadOnlySpan(_compilation.GetSpecialType(SpecialType.System_Char)))
+                {
+                    return StringToReadOnlySpanChar();
+                }
+
+                var op = TryWellKnownImplicitConversion(from, to) ??
+                    ResolveOperator(from, false, ImplicitConversionOpNames(to), new[] { to, _compilation.CoreTypes.Convert.Symbol }, target: to);
+                if (op != null)
+                {
+                    return op;
+                }
+            }
+
+            if ((kinds & ConversionKind.Explicit) == ConversionKind.Explicit)
+            {
+                var op = ResolveOperator(from, false, ExplicitConversionOpNames(to), new[] { to, _compilation.CoreTypes.Convert.Symbol }, target: to);
+                if (op != null)
+                {
+                    return op;
+                }
+            }
+
+            return null;
+        }
+
         // resolve operator method
         public MethodSymbol ResolveOperator(TypeSymbol receiver, bool hasref, string[] opnames, TypeSymbol[] extensions, TypeSymbol operand = null, TypeSymbol target = null)
         {
@@ -303,6 +350,10 @@ namespace Pchp.CodeAnalysis.Semantics
                                         if (conv.Exists)    // TODO: chain the conversion
                                         {
                                             cost += ConvCost(conv, operand, ps[pconsumed].Type);
+                                        }
+                                        else if (ResolveConversionHelper(operand, ps[pconsumed].Type, ConversionKind.Implicit) != null)
+                                        {
+                                            cost += 4;
                                         }
                                         else
                                         {
@@ -538,54 +589,13 @@ namespace Pchp.CodeAnalysis.Semantics
                 }
             }
 
-            // strict:
-            if ((kinds & ConversionKind.Strict) == ConversionKind.Strict)
+            // explicit reference conversion (reference type -> reference type)
+            if ((kinds & ConversionKind.Explicit) == ConversionKind.Explicit &&
+                from.IsReferenceType && to.IsReferenceType &&
+                !IsSpecialReferenceType(from) && !IsSpecialReferenceType(to) &&
+                !from.IsArray() && !to.IsArray())
             {
-                var op = ResolveOperator(from, false, ImplicitConversionOpNames(to), new[] { _compilation.CoreTypes.StrictConvert.Symbol }, target: to);
-                if (op != null)
-                {
-                    return new CommonConversion(true, false, false, false, true, false, op, null);
-                }
-            }
-
-            // implicit
-            if ((kinds & ConversionKind.Implicit) == ConversionKind.Implicit)
-            {
-                // string -> PhpString implicitly
-                if (from.SpecialType == SpecialType.System_String && to.Is_PhpString())
-                {
-                    return NoConversion;
-                }
-
-                // string -> ReadOnlySpan<char> implicitly
-                if (from.SpecialType == SpecialType.System_String && to.IsReadOnlySpan(_compilation.GetSpecialType(SpecialType.System_Char)))
-                {
-                    return NoConversion;
-                }
-
-                var op = TryWellKnownImplicitConversion(from, to) ?? ResolveOperator(from, false, ImplicitConversionOpNames(to), new[] { to, _compilation.CoreTypes.Convert.Symbol }, target: to);
-                if (op != null)
-                {
-                    return new CommonConversion(true, false, false, false, true, false, op, null);
-                }
-            }
-
-            // explicit:
-            if ((kinds & ConversionKind.Explicit) == ConversionKind.Explicit)
-            {
-                var op = ResolveOperator(from, false, ExplicitConversionOpNames(to), new[] { to, _compilation.CoreTypes.Convert.Symbol }, target: to);
-                if (op != null)
-                {
-                    return new CommonConversion(true, false, false, false, false, false, op, null);
-                }
-                // explicit reference conversion (reference type -> reference type)
-                else if (
-                    from.IsReferenceType && to.IsReferenceType &&
-                    !IsSpecialReferenceType(from) && !IsSpecialReferenceType(to) &&
-                    !from.IsArray() && !to.IsArray())
-                {
-                    return ExplicitReferenceConversion;
-                }
+                return ExplicitReferenceConversion;
             }
 
             //
